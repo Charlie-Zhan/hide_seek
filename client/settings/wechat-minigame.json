@@ -1,0 +1,38 @@
+{
+  "platform": "wechatgame",
+  "orientation": "landscape",
+  "startScene": "assets/scenes/Lobby.scene",
+  "networkConfig": "assets/scripts/network/NetworkConfig.ts",
+  "shareQueryKey": "roomId",
+  "firstPackage": {
+    "maps": ["kitchen_01"],
+    "scenes": [
+      "assets/scenes/Boot.scene",
+      "assets/scenes/Lobby.scene",
+      "assets/scenes/Room.scene",
+      "assets/scenes/Game.scene",
+      "assets/scenes/Result.scene"
+    ],
+    "include": [
+      "core scripts",
+      "lobby and room UI",
+      "touch input controls",
+      "network client",
+      "first map config",
+      "base character and prop atlas metadata"
+    ],
+    "exclude": [
+      "future maps",
+      "cosmetic skins",
+      "long audio",
+      "raw Kenney source archives",
+      "release review material"
+    ]
+  },
+  "manualBuildNotes": [
+    "Use Cocos Creator 3.x WeChat Minigame target.",
+    "Open the generated build in WeChat Developer Tools.",
+    "For real-device playtests, set globalThis.__PROP_HIDE_SEEK_ROOM_SERVER_URL__ or WeChat storage key prop_hide_seek_room_server_url to the tested ws/wss endpoint.",
+    "Record final build package size after the first real Cocos export."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "prop-hide-seek",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Phase-based foundation for the Prop Hide & Seek WeChat mini game.",
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lan:endpoints": "node tools/playtest/print-lan-endpoints.mjs",
+    "server:lan": "npx tsx tools/playtest/start-lan-room-server.mjs",
+    "smoke:local-ws": "npx tsx tools/playtest/local-websocket-smoke.mjs",
+    "smoke:lan-ws": "npx tsx tools/playtest/lan-websocket-smoke.mjs",
+    "docker:build": "docker compose build",
+    "docker:server": "docker compose up --build room-server",
+    "docker:test": "docker compose run --rm verify",
+    "docker:typecheck": "docker compose run --rm typecheck",
+    "docker:smoke": "docker compose run --rm smoke-local-ws",
+    "validate:phase00": "node tools/build/validate-phase-00.mjs",
+    "validate:phase01": "node tools/build/validate-phase-01.mjs",
+    "validate:phase02": "node tools/build/validate-phase-02.mjs",
+    "validate:phase03": "node tools/build/validate-phase-03.mjs",
+    "validate:phase04": "node tools/build/validate-phase-04.mjs",
+    "validate:phase05": "node tools/build/validate-phase-05.mjs",
+    "validate:phase06": "node tools/build/validate-phase-06.mjs",
+    "validate:phase07": "node tools/build/validate-phase-07.mjs",
+    "validate:phase08": "node tools/build/validate-phase-08.mjs",
+    "validate:ready-pr": "node tools/build/validate-ready-for-pr.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

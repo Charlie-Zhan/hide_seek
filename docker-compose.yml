@@ -1,0 +1,29 @@
+services:
+  room-server:
+    build:
+      context: .
+    image: prop-hide-seek-node:dev
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+    ports:
+      - "8787:8787"
+    command: ["npm", "run", "dev", "--workspace", "@prop-hide-seek/server"]
+
+  verify:
+    build:
+      context: .
+    image: prop-hide-seek-node:dev
+    command: ["npm", "run", "test"]
+
+  typecheck:
+    build:
+      context: .
+    image: prop-hide-seek-node:dev
+    command: ["npm", "run", "typecheck"]
+
+  smoke-local-ws:
+    build:
+      context: .
+    image: prop-hide-seek-node:dev
+    command: ["npm", "run", "smoke:local-ws"]

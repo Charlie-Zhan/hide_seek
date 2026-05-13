@@ -1,0 +1,40 @@
+{
+  "phase": "02",
+  "status": "source_selection_pending",
+  "policy": {
+    "allowedSources": [
+      "Kenney.nl asset packages with recorded source URL and license"
+    ],
+    "forbiddenSources": [
+      "Unverified third-party art",
+      "Commercial skin packs",
+      "Raw full asset packs imported directly into the client first package"
+    ],
+    "requiredBeforeImport": [
+      "Record package name",
+      "Record download URL",
+      "Copy license text into client/assets/art/kenney/licenses/",
+      "Map source sprite names to normalized prop_* output names",
+      "Generate purpose-specific atlas metadata"
+    ]
+  },
+  "plannedAtlases": [
+    {
+      "id": "atlas_gameplay_props",
+      "manifestPath": "client/assets/art/kenney/atlas_gameplay_props.json",
+      "generatedImagePath": "client/assets/art/kenney/props/atlas_gameplay_props.png",
+      "contains": [
+        "prop_wooden_crate",
+        "prop_trash_bin",
+        "prop_plant_pot",
+        "prop_chair",
+        "prop_water_bucket",
+        "prop_food_basket"
+      ],
+      "sourcePackage": null,
+      "sourceUrl": null,
+      "licenseFile": null,
+      "notes": "Placeholder metadata only in Phase 02 worker A; no art bytes imported."
+    }
+  ]
+}
