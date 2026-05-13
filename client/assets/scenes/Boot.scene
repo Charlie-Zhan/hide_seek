@@ -1,0 +1,25 @@
+{
+  "__type__": "cc.SceneAsset",
+  "_name": "Boot",
+  "phase00Placeholder": true,
+  "root": {
+    "name": "SceneRoot",
+    "children": [
+      {
+        "name": "Managers",
+        "children": [
+          {
+            "name": "App",
+            "components": [
+              "App"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "UILayer",
+        "children": []
+      }
+    ]
+  }
+}

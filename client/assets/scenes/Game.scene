@@ -1,0 +1,43 @@
+{
+  "__type__": "cc.SceneAsset",
+  "_name": "Game",
+  "phase00Placeholder": true,
+  "root": {
+    "name": "SceneRoot",
+    "children": [
+      {
+        "name": "Managers",
+        "children": []
+      },
+      {
+        "name": "MapRoot",
+        "children": [
+          {
+            "name": "GroundLayer",
+            "children": []
+          },
+          {
+            "name": "ObjectBackLayer",
+            "children": []
+          },
+          {
+            "name": "PlayerLayer",
+            "children": []
+          },
+          {
+            "name": "ObjectFrontLayer",
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "EffectLayer",
+        "children": []
+      },
+      {
+        "name": "UILayer",
+        "children": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "baseUrl": ".",
+    "paths": {
+      "@prop-hide-seek/shared": [
+        "../shared/src/index.ts"
+      ]
+    },
+    "types": []
+  },
+  "include": [
+    "assets/scripts/**/*.ts",
+    "types/**/*.d.ts"
+  ]
+}

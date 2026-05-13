@@ -1,0 +1,18 @@
+{
+  "__type__": "cc.SceneAsset",
+  "_name": "Lobby",
+  "phase00Placeholder": true,
+  "root": {
+    "name": "SceneRoot",
+    "children": [
+      {
+        "name": "Managers",
+        "children": []
+      },
+      {
+        "name": "UILayer",
+        "children": []
+      }
+    ]
+  }
+}
