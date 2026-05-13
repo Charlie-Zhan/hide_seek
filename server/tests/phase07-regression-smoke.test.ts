@@ -72,6 +72,8 @@ test('phase 07 smoke covers room share join, full match flow, and clean restart 
   assert.equal(joined.value.roomId, created.value.roomId);
   assert.deepEqual(joined.value.players.map((player) => player.playerId), ['player_a', 'player_b']);
 
+  assert.equal(roomService.setReady('player_a', true).ok, true);
+  assert.equal(roomService.setReady('player_b', true).ok, true);
   const started = roomService.startMatch('player_a');
   assert.equal(started.ok, true);
   if (!started.ok) {
@@ -133,6 +135,14 @@ test('phase 07 smoke covers room share join, full match flow, and clean restart 
     return;
   }
   assert.equal(finished.value.status, 'finished');
+
+  const resetRoom = roomService.restartFinishedRoom('player_a');
+  assert.equal(resetRoom.ok, true);
+  if (!resetRoom.ok) {
+    return;
+  }
+  assert.equal(resetRoom.value.status, 'waiting');
+  assert.equal(resetRoom.value.players.every((player) => !player.ready), true);
 
   const restarted = createSmokeMatch('RESTART', players);
   const restartSnapshot = restarted.getSnapshot();

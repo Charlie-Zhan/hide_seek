@@ -15,7 +15,9 @@ Readability, controls feedback, round-state messaging, result clarity, and audio
 - Seek attack feedback shows a clear fan-shaped swing, prop break feedback, hider capture emphasis, miss feedback, and attack-depleted prompt.
 - Disguise switch feedback changes the hider appearance immediately with only a small UI/icon change; no oversized smoke or rule-changing effect.
 - Result panel shows captured hider count, surviving hiders, round score deltas, total ranking, and next seeker.
-- Full match result shows total ranking and optional MVP labels such as best hider or best seeker.
+- Full match result shows total ranking, optional MVP labels such as best hider
+  or best seeker, and a restart-room control for the supported MatchEnd restart
+  flow.
 - Countdown last 5 seconds has a readable emphasis without hiding gameplay.
 - Captured or spectating players cannot confuse the UI for active controls.
 - UI remains readable on phone-sized landscape screens and does not cover the core play area.

@@ -216,6 +216,8 @@ Expected result:
 
 - Share payload contains `roomId`.
 - Guest lands in the host room.
+- Guest auto-join uses the typed current player name when present, otherwise
+  the cached profile nickname, otherwise the default player identity.
 - Player list and ready state match on all devices.
 - Server logs show one join per player identity.
 
@@ -287,10 +289,11 @@ Record disconnect time, reconnect time, final state, and any server log event.
 
 After MatchEnd:
 
-1. Return to lobby or create a new room using the current supported flow.
-2. Start another match without killing the app.
-3. Verify the next match starts at Preview.
-4. Confirm no stale room code, role, captured state, broken props, score delta,
+1. Use the MatchEnd restart-room control.
+2. Confirm the client sends `restart_room` and the room returns to waiting.
+3. Start another match without killing the app.
+4. Verify the next match starts at Preview.
+5. Confirm no stale room code, role, captured state, broken props, score delta,
    or attack count carries into the new match.
 
 ## V2 Default-Off And Explicit-On Check

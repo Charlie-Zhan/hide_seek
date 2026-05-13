@@ -45,7 +45,7 @@ test('rejects invalid names and duplicate joins', () => {
   }
 });
 
-test('joins rooms, toggles ready, and starts when enough players exist', () => {
+test('joins rooms, toggles ready, and starts only when owner and all players are ready', () => {
   const service = new RoomService({ nowMs: () => 2000 });
   const created = service.createRoom('player_a', 'Alice');
   assert.equal(created.ok, true);
@@ -73,7 +73,21 @@ test('joins rooms, toggles ready, and starts when enough players exist', () => {
   }
   assert.equal(ready.value.players.find((player) => player.playerId === 'player_b')?.ready, true);
 
-  const started = service.startMatch('player_b');
+  const nonOwnerStart = service.startMatch('player_b');
+  assert.equal(nonOwnerStart.ok, false);
+  if (!nonOwnerStart.ok) {
+    assert.equal(nonOwnerStart.error.code, 'not_room_owner');
+  }
+
+  const hostNotReady = service.startMatch('player_a');
+  assert.equal(hostNotReady.ok, false);
+  if (!hostNotReady.ok) {
+    assert.equal(hostNotReady.error.code, 'players_not_ready');
+  }
+
+  assert.equal(service.setReady('player_a', true).ok, true);
+
+  const started = service.startMatch('player_a');
   assert.equal(started.ok, true);
   if (!started.ok) {
     return;
@@ -86,6 +100,78 @@ test('joins rooms, toggles ready, and starts when enough players exist', () => {
   if (!startedAgain.ok) {
     assert.equal(startedAgain.error.code, 'match_already_started');
   }
+});
+
+test('resume restores disconnected players in a playing room', () => {
+  const service = new RoomService({ nowMs: () => 3000 });
+  const created = service.createRoom('player_a', 'Alice');
+  assert.equal(created.ok, true);
+  if (!created.ok) {
+    return;
+  }
+
+  assert.equal(service.joinRoom(created.value.roomId, 'player_b', 'Bob').ok, true);
+  assert.equal(service.setReady('player_a', true).ok, true);
+  assert.equal(service.setReady('player_b', true).ok, true);
+  const started = service.startMatch('player_b');
+  assert.equal(started.ok, false);
+  if (!started.ok) {
+    assert.equal(started.error.code, 'not_room_owner');
+  }
+
+  const ownerStarted = service.startMatch('player_a');
+  assert.equal(ownerStarted.ok, true);
+
+  const disconnected = service.disconnectPlayer('player_b');
+  assert.equal(disconnected.ok, true);
+  if (!disconnected.ok) {
+    return;
+  }
+  assert.equal(disconnected.value.room?.players.find((player) => player.playerId === 'player_b')?.connected, false);
+
+  const duplicateJoin = service.joinRoom(created.value.roomId, 'player_b', 'Bob');
+  assert.equal(duplicateJoin.ok, false);
+  if (!duplicateJoin.ok) {
+    assert.equal(duplicateJoin.error.code, 'match_already_started');
+  }
+
+  const resumed = service.resumeRoom(created.value.roomId.toLowerCase(), 'player_b', 'Bob');
+  assert.equal(resumed.ok, true);
+  if (!resumed.ok) {
+    return;
+  }
+  assert.equal(resumed.value.status, 'playing');
+  assert.equal(resumed.value.players.find((player) => player.playerId === 'player_b')?.connected, true);
+});
+
+test('owner can reset a finished room to waiting with ready flags cleared', () => {
+  const service = new RoomService({ nowMs: () => 4000 });
+  const created = service.createRoom('player_a', 'Alice');
+  assert.equal(created.ok, true);
+  if (!created.ok) {
+    return;
+  }
+
+  assert.equal(service.joinRoom(created.value.roomId, 'player_b', 'Bob').ok, true);
+  assert.equal(service.setReady('player_a', true).ok, true);
+  assert.equal(service.setReady('player_b', true).ok, true);
+  assert.equal(service.startMatch('player_a').ok, true);
+  assert.equal(service.finishMatch(created.value.roomId).ok, true);
+
+  const nonOwnerRestart = service.restartFinishedRoom('player_b');
+  assert.equal(nonOwnerRestart.ok, false);
+  if (!nonOwnerRestart.ok) {
+    assert.equal(nonOwnerRestart.error.code, 'not_room_owner');
+  }
+
+  const restarted = service.restartFinishedRoom('player_a');
+  assert.equal(restarted.ok, true);
+  if (!restarted.ok) {
+    return;
+  }
+  assert.equal(restarted.value.status, 'waiting');
+  assert.equal(restarted.value.startedAtMs, undefined);
+  assert.equal(restarted.value.players.every((player) => !player.ready), true);
 });
 
 test('enforces max players', () => {

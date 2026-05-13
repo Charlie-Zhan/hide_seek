@@ -46,6 +46,11 @@ The ready-pr gate checks:
 - client room server URL configuration entry point;
 - this final handoff.
 
+The automated gates validate TypeScript gameplay, room protocol, smoke tools,
+and configuration records. They do not prove that the placeholder Cocos
+`.scene` manifests have been opened, visually wired, exported, or played in
+Cocos Creator/WeChat DevTools.
+
 ## Smoke Command
 
 Run the available smoke entry:

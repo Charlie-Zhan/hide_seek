@@ -9,6 +9,7 @@ import {
   NetworkConnectionState,
   roomNetworkClient
 } from '../network/NetworkClient';
+import { weChatPlatform } from '../wechat/WeChatPlatform';
 
 const { ccclass } = _decorator;
 
@@ -72,6 +73,7 @@ export class RoomUI extends Component {
     this.room = cloneRoom(room);
     sessionState.setRoom(room);
     this.errorText = '';
+    weChatPlatform.registerRoomShare(room.roomId);
   }
 
   public setReady(ready: boolean): void {
@@ -85,6 +87,25 @@ export class RoomUI extends Component {
     this.sendRoomMessage({
       type: 'start_match'
     });
+  }
+
+  public restartRoom(): void {
+    this.sendRoomMessage({
+      type: 'restart_room'
+    });
+  }
+
+  public shareRoom(): boolean {
+    if (!this.room?.roomId) {
+      this.setError('Room code is required before sharing.');
+      return false;
+    }
+
+    const shared = weChatPlatform.shareRoom(this.room.roomId);
+    if (!shared) {
+      this.setError('Share is available in WeChat.');
+    }
+    return shared;
   }
 
   public leaveRoom(): void {

@@ -9,8 +9,12 @@ export type RoomErrorCode =
   | 'invalid_player_name'
   | 'duplicate_join'
   | 'not_in_room'
+  | 'not_room_owner'
   | 'not_enough_players'
+  | 'players_not_ready'
+  | 'player_disconnected'
   | 'match_already_started'
+  | 'match_not_finished'
   | 'invalid_message';
 
 export interface RoomPlayer {
@@ -177,6 +181,36 @@ export class RoomService {
     return success(toPublicRoomState(room));
   }
 
+  public resumeRoom(roomId: string, playerId: string, playerName: string): RoomServiceResult<PublicRoomState> {
+    const room = this.rooms.get(normalizeRoomId(roomId));
+    if (room === undefined) {
+      return failure('room_not_found', 'Room does not exist.');
+    }
+
+    const cleanName = normalizePlayerName(playerName);
+    if (cleanName === undefined) {
+      return failure('invalid_player_name', 'Player name must be 1 to 16 characters.');
+    }
+
+    const player = room.players.find((candidate) => candidate.playerId === playerId);
+    if (player === undefined) {
+      return failure('not_in_room', 'Player is not in this room.');
+    }
+
+    room.players = room.players.map((candidate) =>
+      candidate.playerId === playerId
+        ? {
+            ...candidate,
+            connected: true,
+          }
+        : candidate,
+    );
+    this.playerRoomIds.set(playerId, room.roomId);
+    touchRoom(room, this.nowMs());
+
+    return success(toPublicRoomState(room));
+  }
+
   public leaveRoom(playerId: string): RoomServiceResult<LeaveRoomValue> {
     return this.removePlayerFromWaitingRoom(playerId, false);
   }
@@ -188,7 +222,22 @@ export class RoomService {
     }
 
     if (room.status !== 'waiting') {
-      return failure('match_already_started', 'Match has already started.');
+      room.players = room.players.map((player) =>
+        player.playerId === playerId
+          ? {
+              ...player,
+              connected: false,
+            }
+          : player,
+      );
+      touchRoom(room, this.nowMs());
+
+      return success({
+        room: toPublicRoomState(room),
+        roomId: room.roomId,
+        removedPlayerId: playerId,
+        roomDeleted: false,
+      });
     }
 
     return this.removePlayerFromWaitingRoom(playerId, true);
@@ -227,13 +276,56 @@ export class RoomService {
       return failure('match_already_started', 'Match has already started.');
     }
 
+    const starter = room.players.find((player) => player.playerId === playerId);
+    if (starter?.isOwner !== true) {
+      return failure('not_room_owner', 'Only the room owner can start the match.');
+    }
+
     if (room.players.length < room.minPlayers) {
       return failure('not_enough_players', `At least ${room.minPlayers} players are required.`);
+    }
+
+    if (room.players.some((player) => !player.connected)) {
+      return failure('player_disconnected', 'All players must be connected before starting.');
+    }
+
+    if (room.players.some((player) => !player.ready)) {
+      return failure('players_not_ready', 'All players must be ready before starting.');
     }
 
     room.status = 'playing';
     room.startedAtMs = this.nowMs();
     touchRoom(room, room.startedAtMs);
+
+    return success(toPublicRoomState(room));
+  }
+
+  public restartFinishedRoom(playerId: string): RoomServiceResult<PublicRoomState> {
+    const room = this.getRoomForPlayer(playerId);
+    if (room === undefined) {
+      return failure('not_in_room', 'Player is not in a room.');
+    }
+
+    const starter = room.players.find((player) => player.playerId === playerId);
+    if (starter?.isOwner !== true) {
+      return failure('not_room_owner', 'Only the room owner can restart the room.');
+    }
+
+    if (room.status === 'playing') {
+      return failure('match_already_started', 'Match is still in progress.');
+    }
+
+    if (room.status !== 'finished') {
+      return failure('match_not_finished', 'Room can only be restarted after MatchEnd.');
+    }
+
+    room.status = 'waiting';
+    room.startedAtMs = undefined;
+    room.players = room.players.map((player) => ({
+      ...player,
+      ready: false,
+    }));
+    touchRoom(room, this.nowMs());
 
     return success(toPublicRoomState(room));
   }

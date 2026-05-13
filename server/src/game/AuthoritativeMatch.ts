@@ -210,6 +210,16 @@ export class AuthoritativeMatch {
     player.isMoving = false;
   }
 
+  public handlePlayerReconnected(playerId: string): void {
+    const player = this.players.find((candidate) => candidate.playerId === playerId);
+    if (player === undefined || this.phase === RoundPhase.MatchEnd) {
+      return;
+    }
+
+    player.connected = true;
+    player.disconnectedMs = 0;
+  }
+
   private updateMovement(deltaMs: number): void {
     for (const player of this.players) {
       const speed = this.getSpeedForPlayer(player);

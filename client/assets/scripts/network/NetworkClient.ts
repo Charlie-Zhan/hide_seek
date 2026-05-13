@@ -4,6 +4,7 @@ import type {
   GameEventMessage,
   JoinRoomClientMessage,
   PlayerInputMessage,
+  ResumeRoomClientMessage,
   ServerRoomMessage,
   ServerStateMessage
 } from '@prop-hide-seek/shared';
@@ -103,7 +104,7 @@ export class NetworkClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectAttempt = 0;
   private reconnectStartedAtMs = 0;
-  private roomResumeMessage: JoinRoomClientMessage | null = null;
+  private roomResumeMessage: JoinRoomClientMessage | ResumeRoomClientMessage | null = null;
   private pendingCreateRoomPlayerName: string | null = null;
 
   public connect(serverUrl = this.serverUrl): void {
@@ -161,11 +162,22 @@ export class NetworkClient {
     }
   }
 
-  public setRoomResumeTarget(roomId: string, playerName: string): void {
+  public setRoomResumeTarget(roomId: string, playerName: string, playerId?: string | null): void {
     const cleanRoomId = roomId.trim().toUpperCase();
     const cleanPlayerName = playerName.trim();
     if (cleanRoomId.length === 0 || cleanPlayerName.length === 0) {
       this.roomResumeMessage = null;
+      return;
+    }
+
+    const cleanPlayerId = playerId?.trim() ?? '';
+    if (cleanPlayerId.length > 0) {
+      this.roomResumeMessage = {
+        type: 'resume_room',
+        roomId: cleanRoomId,
+        playerId: cleanPlayerId,
+        playerName: cleanPlayerName
+      };
       return;
     }
 
@@ -181,7 +193,7 @@ export class NetworkClient {
     this.pendingCreateRoomPlayerName = null;
   }
 
-  public getRoomResumeTarget(): JoinRoomClientMessage | null {
+  public getRoomResumeTarget(): JoinRoomClientMessage | ResumeRoomClientMessage | null {
     return this.roomResumeMessage === null ? null : { ...this.roomResumeMessage };
   }
 
@@ -472,6 +484,9 @@ export class NetworkClient {
       case 'join_room':
         this.setRoomResumeTarget(message.roomId, message.playerName);
         return;
+      case 'resume_room':
+        this.setRoomResumeTarget(message.roomId, message.playerName, message.playerId);
+        return;
       case 'create_room':
         this.pendingCreateRoomPlayerName = message.playerName;
         return;
@@ -480,6 +495,7 @@ export class NetworkClient {
         return;
       case 'set_ready':
       case 'start_match':
+      case 'restart_room':
       case 'player_input':
         return;
       default:
@@ -503,7 +519,7 @@ export class NetworkClient {
       this.pendingCreateRoomPlayerName;
 
     if (playerName) {
-      this.setRoomResumeTarget(message.room.roomId, playerName);
+      this.setRoomResumeTarget(message.room.roomId, playerName, playerId);
     }
   }
 

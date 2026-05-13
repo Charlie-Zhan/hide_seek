@@ -9,6 +9,7 @@ import {
   NetworkConnectionState,
   roomNetworkClient
 } from '../network/NetworkClient';
+import { weChatPlatform } from '../wechat/WeChatPlatform';
 
 const { ccclass } = _decorator;
 
@@ -50,6 +51,7 @@ export class LobbyUI extends Component {
       this.flushPendingMessage();
     });
     this.stopNetworkError = roomNetworkClient.onError((message) => this.setError(message));
+    this.applyLaunchRoomId(weChatPlatform.getLaunchRoomId());
   }
 
   protected onDestroy(): void {
@@ -67,6 +69,21 @@ export class LobbyUI extends Component {
   public setJoinRoomId(roomId: string): void {
     this.joinRoomId = roomId.trim().toUpperCase();
     this.errorText = '';
+  }
+
+  public applyLaunchRoomId(roomId: string | null): boolean {
+    if (!roomId) {
+      return false;
+    }
+
+    this.setJoinRoomId(roomId);
+    const playerName = this.resolveLaunchPlayerIdentity();
+    this.queueOrSend({
+      type: 'join_room',
+      roomId: this.joinRoomId,
+      playerName
+    });
+    return true;
   }
 
   public setConnectionStatus(status: NetworkConnectionState | string): void {
@@ -158,6 +175,17 @@ export class LobbyUI extends Component {
       return null;
     }
 
+    sessionState.setPlayerName(playerName);
+    return playerName;
+  }
+
+  private resolveLaunchPlayerIdentity(): string {
+    const currentPlayerName = this.playerName.trim();
+    const profile = weChatPlatform.getOrCreatePlayerProfile(currentPlayerName || null);
+    const playerName = currentPlayerName || profile.nickname;
+
+    this.playerName = playerName;
+    sessionState.setPlayerId(profile.playerId);
     sessionState.setPlayerName(playerName);
     return playerName;
   }

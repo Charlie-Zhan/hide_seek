@@ -1,4 +1,5 @@
 import { _decorator, Component } from 'cc';
+import { roomNetworkClient } from '../network/NetworkClient';
 
 const { ccclass } = _decorator;
 
@@ -31,6 +32,10 @@ export interface ResultPanelDisplayState {
   nextSeekerText: string;
   matchEndText: string;
   mvpTagText: string;
+  restartButtonText: string;
+  restartButtonVisible: boolean;
+  restartButtonEnabled: boolean;
+  restartStatusText: string;
 }
 
 const EMPTY_RESULT: ResultPanelViewModel = {
@@ -49,9 +54,11 @@ export class ResultPanel extends Component {
   private visible = false;
   private viewModel: ResultPanelViewModel = cloneResultViewModel(EMPTY_RESULT);
   private displayState: ResultPanelDisplayState = buildDisplayState(this.viewModel);
+  private restartStatusText = '';
 
   public show(viewModel: ResultPanelViewModel): void {
     this.visible = true;
+    this.restartStatusText = '';
     this.updateViewModel(viewModel);
   }
 
@@ -61,7 +68,10 @@ export class ResultPanel extends Component {
 
   public updateViewModel(viewModel: ResultPanelViewModel): void {
     this.viewModel = cloneResultViewModel(viewModel);
-    this.displayState = buildDisplayState(this.viewModel);
+    if (!this.viewModel.matchEnded) {
+      this.restartStatusText = '';
+    }
+    this.displayState = buildDisplayState(this.viewModel, this.restartStatusText);
   }
 
   public isVisible(): boolean {
@@ -80,9 +90,30 @@ export class ResultPanel extends Component {
       rankingLines: [...this.displayState.rankingLines]
     };
   }
+
+  public restartRoom(): boolean {
+    if (!this.viewModel.matchEnded) {
+      this.restartStatusText = 'Restart is available after MatchEnd.';
+      this.displayState = buildDisplayState(this.viewModel, this.restartStatusText);
+      return false;
+    }
+
+    if (!roomNetworkClient.send({ type: 'restart_room' })) {
+      this.restartStatusText = 'Not connected to room server.';
+      this.displayState = buildDisplayState(this.viewModel, this.restartStatusText);
+      return false;
+    }
+
+    this.restartStatusText = 'Restart requested.';
+    this.displayState = buildDisplayState(this.viewModel, this.restartStatusText);
+    return true;
+  }
 }
 
-function buildDisplayState(viewModel: ResultPanelViewModel): ResultPanelDisplayState {
+function buildDisplayState(
+  viewModel: ResultPanelViewModel,
+  restartStatusText = ''
+): ResultPanelDisplayState {
   const playersById = new Map(viewModel.scoreDeltas.map((score) => [score.playerId, score]));
   const seeker = playersById.get(viewModel.seekerId);
   const nextSeeker = viewModel.nextSeekerId ? playersById.get(viewModel.nextSeekerId) : null;
@@ -112,7 +143,11 @@ function buildDisplayState(viewModel: ResultPanelViewModel): ResultPanelDisplayS
       ? ''
       : `Next Seeker: ${nextSeeker?.displayName ?? viewModel.nextSeekerId ?? 'TBD'}`,
     matchEndText: viewModel.matchEnded ? 'Final ranking' : '',
-    mvpTagText: (viewModel.mvpTags ?? []).join(', ')
+    mvpTagText: (viewModel.mvpTags ?? []).join(', '),
+    restartButtonText: 'Restart Room',
+    restartButtonVisible: Boolean(viewModel.matchEnded),
+    restartButtonEnabled: Boolean(viewModel.matchEnded),
+    restartStatusText
   };
 }
 

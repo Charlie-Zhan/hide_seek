@@ -7,9 +7,11 @@ import { RoomService, type PublicRoomState, type RoomServiceError } from '../roo
 type ClientRoomMessage =
   | { type: 'create_room'; requestId?: string; playerName: string }
   | { type: 'join_room'; requestId?: string; roomId: string; playerName: string }
+  | { type: 'resume_room'; requestId?: string; roomId: string; playerId: string; playerName: string }
   | { type: 'leave_room'; requestId?: string }
   | { type: 'set_ready'; requestId?: string; ready: boolean }
   | { type: 'start_match'; requestId?: string }
+  | { type: 'restart_room'; requestId?: string }
   | { type: 'player_input'; requestId?: string; seq?: number; moveX: number; moveY: number; action?: PlayerInputAction }
   | { type: 'player_ready'; requestId?: string; isReady: boolean };
 
@@ -191,6 +193,32 @@ export class WebSocketRoomServer {
         return;
       }
 
+      case 'resume_room': {
+        const result = this.roomService.resumeRoom(message.roomId, message.playerId, message.playerName);
+        if (!result.ok) {
+          this.sendError(socket, result.error, message.requestId);
+          return;
+        }
+
+        this.adoptClientPlayerId(socket, client, message.playerId);
+        const activeMatch = this.activeMatches.get(result.value.roomId);
+        if (activeMatch !== undefined) {
+          activeMatch.match.handlePlayerReconnected(message.playerId);
+        }
+
+        this.logger.info('Player resumed room.', {
+          roomId: result.value.roomId,
+          playerId: message.playerId,
+          status: result.value.status,
+        });
+        this.send(socket, roomJoinedMessage(message.playerId, result.value, message.requestId));
+        this.broadcastRoomUpdate(result.value);
+        if (activeMatch !== undefined) {
+          this.broadcastMatchState(result.value, activeMatch.match.getSnapshot(true));
+        }
+        return;
+      }
+
       case 'leave_room': {
         const result = this.roomService.leaveRoom(client.playerId);
         if (!result.ok) {
@@ -254,6 +282,21 @@ export class WebSocketRoomServer {
         return;
       }
 
+      case 'restart_room': {
+        const result = this.roomService.restartFinishedRoom(client.playerId);
+        if (!result.ok) {
+          this.sendError(socket, result.error, message.requestId);
+          return;
+        }
+
+        this.logger.info('Finished room reset to waiting.', {
+          roomId: result.value.roomId,
+          playerId: client.playerId,
+        });
+        this.broadcastRoomUpdate(result.value);
+        return;
+      }
+
       case 'player_input': {
         const roomId = this.roomService.getRoomIdForPlayer(client.playerId);
         if (roomId === undefined) {
@@ -290,7 +333,7 @@ export class WebSocketRoomServer {
     this.clients.delete(socket);
     const result = this.roomService.disconnectPlayer(client.playerId);
     if (result.ok) {
-      this.logger.info('Client disconnected and was removed from waiting room.', {
+      this.logger.info('Client disconnected from room.', {
         playerId: client.playerId,
         roomId: result.value.roomId,
         roomDeleted: result.value.roomDeleted,
@@ -298,6 +341,14 @@ export class WebSocketRoomServer {
 
       if (result.value.room !== undefined) {
         this.broadcastRoomUpdate(result.value.room);
+      }
+
+      if (roomId !== undefined && result.value.room?.status === 'playing') {
+        const activeMatch = this.activeMatches.get(roomId);
+        if (activeMatch !== undefined) {
+          activeMatch.match.handlePlayerDisconnected(client.playerId);
+          this.broadcastMatchState(result.value.room, activeMatch.match.getSnapshot(true));
+        }
       }
       return;
     }
@@ -321,6 +372,26 @@ export class WebSocketRoomServer {
         code: result.error.code,
       });
     }
+  }
+
+  private adoptClientPlayerId(socket: WebSocket, client: RoomClient, resumedPlayerId: string): void {
+    for (const [otherSocket, otherClient] of this.clients.entries()) {
+      if (otherSocket === socket || otherClient.playerId !== resumedPlayerId) {
+        continue;
+      }
+
+      this.clients.delete(otherSocket);
+      otherSocket.close(4000, 'Replaced by resumed connection.');
+    }
+
+    if (client.playerId === resumedPlayerId) {
+      return;
+    }
+
+    this.clients.set(socket, {
+      playerId: resumedPlayerId,
+      socket,
+    });
   }
 
   private broadcastRoomUpdate(room: PublicRoomState): void {
@@ -486,6 +557,24 @@ function parseClientMessage(data: WebSocket.RawData): ClientRoomMessage | undefi
       };
     }
 
+    case 'resume_room': {
+      const playerName = typeof value.playerName === 'string' ? value.playerName : value.displayName;
+      if (
+        typeof value.roomId !== 'string' ||
+        typeof value.playerId !== 'string' ||
+        typeof playerName !== 'string'
+      ) {
+        return undefined;
+      }
+      return {
+        type: 'resume_room',
+        requestId,
+        roomId: value.roomId,
+        playerId: value.playerId,
+        playerName,
+      };
+    }
+
     case 'leave_room':
       return {
         type: 'leave_room',
@@ -515,6 +604,12 @@ function parseClientMessage(data: WebSocket.RawData): ClientRoomMessage | undefi
     case 'start_match':
       return {
         type: 'start_match',
+        requestId,
+      };
+
+    case 'restart_room':
+      return {
+        type: 'restart_room',
         requestId,
       };
 

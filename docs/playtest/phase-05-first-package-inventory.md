@@ -2,7 +2,12 @@
 
 ## Current Boundary
 
-The first package should contain only the startup flow, lobby/room screens, the first playable map, core UI, touch input, network client, and base character/prop metadata needed for `kitchen_01`.
+The first package should contain only the startup flow, lobby/room screens, the first MVP map config, core UI, touch input, network client, and base character/prop metadata needed for `kitchen_01`.
+
+Current repository note: the checked-in Cocos `.scene` files are placeholder
+manifests used to preserve scene names and intended hierarchy. Do not treat this
+inventory as proof that a real Cocos Creator visual scene export has been
+completed; record that evidence after opening/exporting the project manually.
 
 ## Included
 

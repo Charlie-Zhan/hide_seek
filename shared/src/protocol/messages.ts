@@ -7,10 +7,12 @@ import type { PublicPropState, PublicRoomState, RoomStateSnapshot } from './room
 export type ClientMessageType =
   | 'create_room'
   | 'join_room'
+  | 'resume_room'
   | 'leave_room'
   | 'set_ready'
   | 'player_ready'
   | 'start_match'
+  | 'restart_room'
   | 'player_input';
 
 export type ServerMessageType =
@@ -32,8 +34,12 @@ export type RoomErrorCode =
   | 'invalid_player_name'
   | 'duplicate_join'
   | 'not_in_room'
+  | 'not_room_owner'
   | 'not_enough_players'
+  | 'players_not_ready'
+  | 'player_disconnected'
   | 'match_already_started'
+  | 'match_not_finished'
   | 'invalid_message';
 
 export interface CreateRoomClientMessage {
@@ -44,6 +50,13 @@ export interface CreateRoomClientMessage {
 export interface JoinRoomClientMessage {
   type: 'join_room';
   roomId: string;
+  playerName: string;
+}
+
+export interface ResumeRoomClientMessage {
+  type: 'resume_room';
+  roomId: string;
+  playerId: string;
   playerName: string;
 }
 
@@ -60,12 +73,18 @@ export interface StartMatchClientMessage {
   type: 'start_match';
 }
 
+export interface RestartRoomClientMessage {
+  type: 'restart_room';
+}
+
 export type ClientRoomMessage =
   | CreateRoomClientMessage
   | JoinRoomClientMessage
+  | ResumeRoomClientMessage
   | LeaveRoomClientMessage
   | SetReadyClientMessage
-  | StartMatchClientMessage;
+  | StartMatchClientMessage
+  | RestartRoomClientMessage;
 
 export interface RoomJoinedServerMessage {
   type: 'room_joined';

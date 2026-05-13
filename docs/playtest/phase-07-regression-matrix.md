@@ -27,7 +27,7 @@ Network:
 | P07-REG-004 | Room | Host room exists | Second player joins with room code using lowercase and uppercase variants | Join normalizes room code and adds the second player once | Server room state |
 | P07-REG-005 | Room | Room has fewer than min players | Host starts match | Start is rejected with a clear not-enough-players path | Error state |
 | P07-REG-006 | Room | Room has 2-4 players | Start match | Server marks room playing and clients receive match start/state | `match_starting` or `state` log |
-| P07-REG-007 | Share launch | Host room exists in WeChat runtime | Share room card, open it as another player | Launch query contains `roomId`; guest auto-joins the target room | Share payload and guest room state |
+| P07-REG-007 | Share launch | Host room exists in WeChat runtime | Share room card, open it as another player | Launch query contains `roomId`; guest auto-joins the target room with current, cached, or default identity | Share payload and guest room state |
 | P07-REG-008 | Share launch | Invalid, expired, or malformed room link | Open the share entry | Client shows join failure and remains recoverable in Lobby/Room flow | Error screenshot/log |
 | P07-REG-009 | Preview | Match just started | Send movement/action from seeker and hider | Player characters remain hidden, inputs are ignored, original props stay visible | State snapshot and screen |
 | P07-REG-010 | Hide | Preview elapsed | Seeker attempts movement/attack | Seeker sees blind/static overlay and server ignores seeker input | Redacted seeker state |
@@ -38,7 +38,7 @@ Network:
 | P07-REG-015 | Seek | Attack count near zero | Use final attack without all hiders captured | Round immediately enters Result with surviving hiders scored | `round_ended: attacks_used` |
 | P07-REG-016 | Result | Round just ended | Compare all clients | Result shows same captured/survived players, score deltas, totals, and next seeker | Screenshots from clients |
 | P07-REG-017 | MatchEnd | Each player has been seeker once | Finish final Result countdown | MatchEnd shows final ranking; no active controls can affect match state | Final state snapshot |
-| P07-REG-018 | Restart | MatchEnd or finished room | Start a new room/match flow without app reload | New match starts at Preview with clean room state and no stale props/captures/attack count | New room and first state |
+| P07-REG-018 | Restart | MatchEnd or finished room | Use the MatchEnd restart-room control without app reload | Client sends `restart_room`; restarted match starts at Preview with clean room state and no stale props/captures/attack count | Restart request, room update, and first state |
 
 ## Stability Matrix
 
@@ -93,7 +93,7 @@ npm run typecheck
 
 Phase 07 smoke target:
 
-- `server/tests/phase07-regression-smoke.test.ts` checks room creation/join/start, share-code normalization, authoritative phase flow, seeker/hider input gates, Result/MatchEnd, disconnect timeout handling, and clean new-match construction for restart coverage.
+- `server/tests/phase07-regression-smoke.test.ts` checks room creation/join/start, share-code normalization, authoritative phase flow, seeker/hider input gates, Result/MatchEnd, disconnect timeout handling, and the supported finished-room reset path for restart coverage.
 
 ## Release Gate Checklist
 

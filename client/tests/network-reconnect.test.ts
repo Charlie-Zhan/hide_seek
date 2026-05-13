@@ -29,7 +29,7 @@ describe('Phase 05 NetworkClient reconnect and room restore', () => {
     }
   });
 
-  it('automatically reconnects for a short window and sends join_room to restore the room', async () => {
+  it('automatically reconnects for a short window and sends resume_room after room identity is known', async () => {
     const client = new NetworkClient();
     const reconnectStates: NetworkReconnectState[] = [];
     const errors: string[] = [];
@@ -43,6 +43,7 @@ describe('Phase 05 NetworkClient reconnect and room restore', () => {
     assert.equal(client.getConnectionState(), NetworkConnectionState.Connected);
 
     assert.equal(client.send({ type: 'join_room', roomId: 'ab12', playerName: 'Alice' }), true);
+    firstSocket.receive(JSON.stringify(createRoomJoinedMessage('AB12', 'player_1', 'Alice')));
     firstSocket.closeFromServer({ code: 1006, reason: 'network lost' });
 
     await waitFor(() => FakeWebSocket.instances.length === 2);
@@ -50,11 +51,11 @@ describe('Phase 05 NetworkClient reconnect and room restore', () => {
     secondSocket.open();
 
     assert.deepEqual(parseSent(secondSocket), [
-      { type: 'join_room', roomId: 'AB12', playerName: 'Alice' }
+      { type: 'resume_room', roomId: 'AB12', playerId: 'player_1', playerName: 'Alice' }
     ]);
     assert.equal(client.getReconnectState(), NetworkReconnectState.RestoringRoom);
 
-    secondSocket.receive(JSON.stringify(createRoomJoinedMessage('AB12', 'player_2', 'Alice')));
+    secondSocket.receive(JSON.stringify(createRoomJoinedMessage('AB12', 'player_1', 'Alice')));
 
     assert.equal(client.getReconnectState(), NetworkReconnectState.Reconnected);
     assert.deepEqual(reconnectStates, [
@@ -104,7 +105,7 @@ describe('Phase 05 NetworkClient reconnect and room restore', () => {
       connectSocket: ({ url }: { url: string }) => new FakeWeChatSocketTask(url)
     };
     client.configureReconnect({ enabled: true, delayMs: 1, maxAttempts: 2, maxElapsedMs: 500 });
-    client.setRoomResumeTarget('wx99', 'Wei');
+    client.setRoomResumeTarget('wx99', 'Wei', 'player_wx');
 
     client.connect('wss://wechat-room-server');
     const firstTask = FakeWeChatSocketTask.instances[0];
@@ -116,7 +117,7 @@ describe('Phase 05 NetworkClient reconnect and room restore', () => {
     secondTask.open();
 
     assert.deepEqual(parseSent(secondTask), [
-      { type: 'join_room', roomId: 'WX99', playerName: 'Wei' }
+      { type: 'resume_room', roomId: 'WX99', playerId: 'player_wx', playerName: 'Wei' }
     ]);
 
     client.disconnect();

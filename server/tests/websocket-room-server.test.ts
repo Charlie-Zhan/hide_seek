@@ -250,6 +250,109 @@ test('websocket player_input ignores non movement actions outside the input whit
   }
 });
 
+test('websocket clients resume a playing room with resume_room instead of join_room', async () => {
+  const roomServer = new WebSocketRoomServer(new RoomService(), {
+    host: '127.0.0.1',
+    port: 0,
+    tickRateHz: 20,
+    matchConfig: {
+      previewDurationMs: 5000,
+      hideDurationMs: 5000,
+      seekDurationMs: 5000,
+    },
+  });
+  roomServer.start();
+  await roomServer.waitUntilListening();
+
+  const clientA = await connectClient(roomServer.getUrl());
+  const clientB = await connectClient(roomServer.getUrl());
+  let resumedClient: TestClient | null = null;
+
+  try {
+    await clientA.waitForMessage('welcome');
+    await clientB.waitForMessage('welcome');
+    const roomId = await createReadyRoom(clientA, clientB);
+
+    clientA.send({ type: 'start_match' });
+    await clientA.waitForMessage('match_starting');
+    await clientB.waitForMessage('match_starting');
+    await clientA.waitForMessage('state');
+
+    clientB.close();
+    await clientA.waitForPredicate((message) =>
+      message.type === 'room_updated' &&
+      message.room?.players.find((player) => player.playerName === 'Bob')?.connected === false
+    );
+
+    resumedClient = await connectClient(roomServer.getUrl());
+    await resumedClient.waitForMessage('welcome');
+    resumedClient.send({ type: 'resume_room', roomId, playerId: 'player_2', playerName: 'Bob' });
+
+    const resumed = await resumedClient.waitForMessage('room_joined');
+    assert.equal(resumed.playerId, 'player_2');
+    assert.equal(resumed.room?.status, 'playing');
+    assert.equal(resumed.room?.players.find((player) => player.playerId === 'player_2')?.connected, true);
+    const resumedState = await resumedClient.waitForMessage('state');
+    assert.equal(resumedState.room?.roomId, undefined);
+    assert.equal(resumedState.type, 'state');
+  } finally {
+    clientA.close();
+    clientB.close();
+    resumedClient?.close();
+    roomServer.close();
+  }
+});
+
+test('websocket owner can restart a finished room and start another match', async () => {
+  const roomServer = new WebSocketRoomServer(new RoomService(), {
+    host: '127.0.0.1',
+    port: 0,
+    tickRateHz: 20,
+    matchConfig: {
+      previewDurationMs: 1,
+      hideDurationMs: 1,
+      seekDurationMs: 1,
+      resultDurationMs: 1,
+    },
+  });
+  roomServer.start();
+  await roomServer.waitUntilListening();
+
+  const clientA = await connectClient(roomServer.getUrl());
+  const clientB = await connectClient(roomServer.getUrl());
+
+  try {
+    await clientA.waitForMessage('welcome');
+    await clientB.waitForMessage('welcome');
+    await createReadyRoom(clientA, clientB);
+
+    clientA.send({ type: 'start_match' });
+    await clientA.waitForMessage('match_starting');
+    await clientA.waitForPredicate((message) => message.type === 'state' && message.phase === 'match_end');
+    const finishedRoom = await clientA.waitForPredicate((message) =>
+      message.type === 'room_updated' && message.room?.status === 'finished'
+    );
+    assert.equal(finishedRoom.room?.status, 'finished');
+
+    clientA.send({ type: 'restart_room' });
+    const restartedRoom = await clientA.waitForPredicate((message) =>
+      message.type === 'room_updated' && message.room?.status === 'waiting'
+    );
+    assert.equal(restartedRoom.room?.players.every((player) => !player.ready), true);
+
+    clientA.send({ type: 'set_ready', ready: true });
+    clientB.send({ type: 'set_ready', ready: true });
+    await clientA.waitForPredicate((message) => message.room?.players.filter((player) => player.ready).length === 2);
+    clientA.send({ type: 'start_match' });
+    const startingAgain = await clientA.waitForMessage('match_starting');
+    assert.equal(startingAgain.room?.status, 'playing');
+  } finally {
+    clientA.close();
+    clientB.close();
+    roomServer.close();
+  }
+});
+
 interface TestClient {
   send(message: object): void;
   close(): void;
@@ -301,8 +404,9 @@ function waitForBufferedPredicate(
   messages: TestMessage[],
   predicate: (message: TestMessage) => boolean
 ): Promise<TestMessage> {
-  const existing = messages.find(predicate);
-  if (existing) {
+  const existingIndex = messages.findIndex(predicate);
+  if (existingIndex >= 0) {
+    const [existing] = messages.splice(existingIndex, 1);
     return Promise.resolve(existing);
   }
 
@@ -320,6 +424,10 @@ function waitForBufferedPredicate(
 
       clearTimeout(timeout);
       socket.off('message', onMessage);
+      const bufferedIndex = messages.findIndex(predicate);
+      if (bufferedIndex >= 0) {
+        messages.splice(bufferedIndex, 1);
+      }
       resolve(message);
     };
 

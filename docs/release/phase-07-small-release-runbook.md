@@ -40,10 +40,14 @@ Account handling rules:
 7. Verify ready state and start the match.
 8. Complete Preview, Hide, Seek, Result, and MatchEnd.
 9. Run one reconnect check with a hider and one reconnect check with the seeker.
-10. Record package size, performance, errors, and any blocking issue.
+10. From MatchEnd, use the room restart flow and verify the room returns to
+    waiting with ready states cleared before starting another match.
+11. Record package size, performance, errors, and any blocking issue.
 
 Reconnect checks should confirm whether the client sends `resume_room` for a
 known room session or falls back to `join_room` with clear user-facing handling.
+After MatchEnd, restart checks should use the supported `restart_room` flow;
+creating a separate new room is only a diagnostic fallback.
 
 ## Error Log Toggle
 
