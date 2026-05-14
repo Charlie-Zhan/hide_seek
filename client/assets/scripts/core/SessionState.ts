@@ -1,17 +1,27 @@
 import type { PublicRoomPlayer, PublicRoomState } from '@prop-hide-seek/shared';
 
+export type GameplayMode = 'multiplayer' | 'solo';
+
 export interface SessionSnapshot {
   roomId: string | null;
   playerId: string | null;
   playerName: string;
   latestRoom: PublicRoomState | null;
+  gameplayMode: GameplayMode;
+  soloComputerCount: number;
 }
+
+export const MIN_SOLO_COMPUTER_COUNT = 1;
+export const MAX_SOLO_COMPUTER_COUNT = 4;
+export const DEFAULT_SOLO_COMPUTER_COUNT = 2;
 
 export class SessionState {
   private roomId: string | null = null;
   private playerId: string | null = null;
   private playerName = '';
   private latestRoom: PublicRoomState | null = null;
+  private gameplayMode: GameplayMode = 'multiplayer';
+  private soloComputerCount = DEFAULT_SOLO_COMPUTER_COUNT;
 
   public setPlayerName(playerName: string): void {
     this.playerName = playerName.trim();
@@ -23,6 +33,7 @@ export class SessionState {
   }
 
   public setRoom(room: PublicRoomState, playerId?: string | null): void {
+    this.gameplayMode = 'multiplayer';
     this.roomId = room.roomId;
     this.latestRoom = cloneRoom(room);
 
@@ -38,11 +49,36 @@ export class SessionState {
     this.latestRoom = null;
   }
 
+  public startSoloMode(
+    playerName?: string | null,
+    playerId = 'solo_player_1',
+    computerCount = this.soloComputerCount
+  ): void {
+    const normalizedName = playerName?.trim() ?? '';
+    if (normalizedName.length > 0) {
+      this.playerName = normalizedName;
+    } else if (this.playerName.length === 0) {
+      this.playerName = 'Solo Player';
+    }
+
+    this.gameplayMode = 'solo';
+    this.roomId = null;
+    this.latestRoom = null;
+    this.playerId = playerId;
+    this.soloComputerCount = normalizeSoloComputerCount(computerCount);
+  }
+
+  public startMultiplayerMode(): void {
+    this.gameplayMode = 'multiplayer';
+  }
+
   public reset(): void {
     this.roomId = null;
     this.playerId = null;
     this.playerName = '';
     this.latestRoom = null;
+    this.gameplayMode = 'multiplayer';
+    this.soloComputerCount = DEFAULT_SOLO_COMPUTER_COUNT;
   }
 
   public getRoomId(): string | null {
@@ -59,6 +95,22 @@ export class SessionState {
 
   public getLatestRoom(): PublicRoomState | null {
     return this.latestRoom ? cloneRoom(this.latestRoom) : null;
+  }
+
+  public getGameplayMode(): GameplayMode {
+    return this.gameplayMode;
+  }
+
+  public isSoloMode(): boolean {
+    return this.gameplayMode === 'solo';
+  }
+
+  public setSoloComputerCount(count: number): void {
+    this.soloComputerCount = normalizeSoloComputerCount(count);
+  }
+
+  public getSoloComputerCount(): number {
+    return this.soloComputerCount;
   }
 
   public getLocalRoomPlayer(): PublicRoomPlayer | null {
@@ -82,7 +134,9 @@ export class SessionState {
       roomId: this.roomId,
       playerId: this.playerId,
       playerName: this.playerName,
-      latestRoom: this.latestRoom ? cloneRoom(this.latestRoom) : null
+      latestRoom: this.latestRoom ? cloneRoom(this.latestRoom) : null,
+      gameplayMode: this.gameplayMode,
+      soloComputerCount: this.soloComputerCount
     };
   }
 
@@ -120,4 +174,12 @@ function cloneRoom(room: PublicRoomState): PublicRoomState {
 function normalizeNullableText(value: string | null | undefined): string | null {
   const normalized = value?.trim() ?? '';
   return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeSoloComputerCount(count: number): number {
+  if (!Number.isFinite(count)) {
+    return DEFAULT_SOLO_COMPUTER_COUNT;
+  }
+
+  return Math.max(MIN_SOLO_COMPUTER_COUNT, Math.min(MAX_SOLO_COMPUTER_COUNT, Math.round(count)));
 }

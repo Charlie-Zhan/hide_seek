@@ -3,7 +3,11 @@ import type { ClientRoomMessage } from '@prop-hide-seek/shared';
 import { SceneName } from '../core/GameConstants';
 import { Logger } from '../core/Logger';
 import { SceneLoader } from '../core/SceneLoader';
-import { sessionState } from '../core/SessionState';
+import {
+  MAX_SOLO_COMPUTER_COUNT,
+  MIN_SOLO_COMPUTER_COUNT,
+  sessionState
+} from '../core/SessionState';
 import { MessageRouter } from '../network/MessageRouter';
 import { normalizeRoomServerUrl, saveRoomServerUrl } from '../network/NetworkConfig';
 import {
@@ -29,6 +33,10 @@ export interface LobbyDisplayState {
   errorText: string;
   createButtonText: string;
   joinButtonText: string;
+  soloButtonText: string;
+  soloComputerCountText: string;
+  canDecreaseSoloComputerCount: boolean;
+  canIncreaseSoloComputerCount: boolean;
 }
 
 @ccclass('LobbyUI')
@@ -48,6 +56,7 @@ export class LobbyUI extends Component {
   private connectionStatus = roomNetworkClient.getConnectionState();
   private errorText = '';
   private pendingMessage: ClientRoomMessage | null = null;
+  private soloComputerCount = sessionState.getSoloComputerCount();
 
   protected override start(): void {
     this.router.start();
@@ -140,6 +149,7 @@ export class LobbyUI extends Component {
       return;
     }
 
+    sessionState.startMultiplayerMode();
     this.queueOrSend({
       type: 'create_room',
       playerName
@@ -158,11 +168,30 @@ export class LobbyUI extends Component {
       return;
     }
 
+    sessionState.startMultiplayerMode();
     this.queueOrSend({
       type: 'join_room',
       roomId,
       playerName
     });
+  }
+
+  public startSoloMode(): void {
+    const playerName = this.playerName.trim() || 'Solo Player';
+    this.playerName = playerName;
+    sessionState.startSoloMode(playerName, 'solo_player_1', this.soloComputerCount);
+    this.errorText = '';
+    this.sceneLoader.load(SceneName.Game);
+  }
+
+  public setSoloComputerCount(count: number): void {
+    sessionState.setSoloComputerCount(count);
+    this.soloComputerCount = sessionState.getSoloComputerCount();
+    this.errorText = '';
+  }
+
+  public adjustSoloComputerCount(delta: number): void {
+    this.setSoloComputerCount(this.soloComputerCount + delta);
   }
 
   public getDisplayState(): LobbyDisplayState {
@@ -184,7 +213,11 @@ export class LobbyUI extends Component {
       connectionStatusText: connectionStateToText(this.connectionStatus),
       errorText: this.errorText,
       createButtonText: 'Create Room',
-      joinButtonText: 'Join Room'
+      joinButtonText: 'Join Room',
+      soloButtonText: 'Solo Practice',
+      soloComputerCountText: `${this.soloComputerCount} Computer ${this.soloComputerCount === 1 ? 'Player' : 'Players'}`,
+      canDecreaseSoloComputerCount: this.soloComputerCount > MIN_SOLO_COMPUTER_COUNT,
+      canIncreaseSoloComputerCount: this.soloComputerCount < MAX_SOLO_COMPUTER_COUNT
     };
   }
 

@@ -1,4 +1,4 @@
-import { type GameConfig, RoundPhase } from './LocalGameTypes';
+import { MAX_LOCAL_PLAYERS, type GameConfig, MIN_LOCAL_PLAYERS, RoundPhase } from './LocalGameTypes';
 
 export interface RoundManagerSnapshot {
   phase: RoundPhase;
@@ -20,8 +20,8 @@ export class RoundManager {
     private readonly config: GameConfig,
     private readonly playerCount: number
   ) {
-    if (playerCount < 2 || playerCount > 4) {
-      throw new Error('Local Phase 01 match requires 2 to 4 players.');
+    if (playerCount < MIN_LOCAL_PLAYERS || playerCount > MAX_LOCAL_PLAYERS) {
+      throw new Error(`Local match requires ${MIN_LOCAL_PLAYERS} to ${MAX_LOCAL_PLAYERS} players.`);
     }
   }
 

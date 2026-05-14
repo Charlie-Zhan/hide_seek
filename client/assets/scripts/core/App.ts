@@ -29,6 +29,11 @@ import {
   type ScreenSafeArea,
   type TouchPoint
 } from '../input/TouchInputAdapter';
+import { LocalGameEngine } from '../gameplay/LocalGameEngine';
+import { createLocalGameSetupFromMap } from '../gameplay/LocalGameMapAdapter';
+import { SoloComputerSeekerController } from '../gameplay/SoloComputerSeekerController';
+import type { LocalGameSnapshot } from '../gameplay/LocalGameTypes';
+import { MapManager, type LocalMapConfigInput } from '../map/MapManager';
 import { GameHUD } from '../ui/GameHUD';
 import { LobbyUI } from '../ui/LobbyUI';
 import { ResultPanel } from '../ui/ResultPanel';
@@ -36,6 +41,7 @@ import { RoomUI } from '../ui/RoomUI';
 
 const { ccclass } = _decorator;
 const runtimeLogger = new Logger('RuntimeSceneBridge');
+const SOLO_PLAYER_ID = 'solo_player_1';
 
 installRuntimeSceneBridge();
 
@@ -143,9 +149,10 @@ function mountLobby(canvas: Node): void {
   const playerInput = addEditBox(root, 'Player name', '', -220, 146, 240, 46);
   const roomInput = addEditBox(root, 'Room code', '', 82, 146, 180, 46);
   const serverInput = addEditBox(root, 'ws://server:8787', '', 0, 86, 544, 46);
-  const status = addLabel(root, '', 0, -8, 18, new Color(203, 213, 225, 255), 760, 30);
-  const error = addLabel(root, '', 0, -44, 18, new Color(248, 113, 113, 255), 760, 30);
-  const guide = addLabel(root, '', 0, -135, 18, new Color(203, 213, 225, 255), 820, 110);
+  const soloCount = addLabel(root, '', 0, -26, 18, new Color(226, 232, 240, 255), 300, 34);
+  const status = addLabel(root, '', 0, -128, 18, new Color(203, 213, 225, 255), 760, 30);
+  const error = addLabel(root, '', 0, -164, 18, new Color(248, 113, 113, 255), 760, 30);
+  const guide = addLabel(root, '', 0, -236, 18, new Color(203, 213, 225, 255), 820, 72);
 
   const render = () => {
     const state = logic.getDisplayState();
@@ -160,6 +167,7 @@ function mountLobby(canvas: Node): void {
     status.string = `Network: ${state.connectionStatusText} | Server: ${state.serverUrlText}`;
     error.string = state.errorText;
     guide.string = state.gameplaySummaryLines.join('\n');
+    soloCount.string = state.soloComputerCountText;
   };
 
   addButton(root, 'Create Room', -150, 30, 240, 48, () => {
@@ -173,6 +181,19 @@ function mountLobby(canvas: Node): void {
     logic.setJoinRoomId(roomInput.string);
     logic.setServerUrl(logic.getDisplayState().serverUrlText);
     logic.joinRoom();
+    render();
+  });
+  addButton(root, '-', -185, -26, 54, 40, () => {
+    logic.adjustSoloComputerCount(-1);
+    render();
+  });
+  addButton(root, '+', 185, -26, 54, 40, () => {
+    logic.adjustSoloComputerCount(1);
+    render();
+  });
+  addButton(root, 'Solo Practice', 0, -82, 260, 48, () => {
+    logic.setPlayerName(playerInput.string);
+    logic.startSoloMode();
     render();
   });
 
@@ -235,6 +256,11 @@ function mountRoom(canvas: Node): void {
 }
 
 function mountGame(canvas: Node): void {
+  if (sessionState.isSoloMode()) {
+    mountSoloGame(canvas);
+    return;
+  }
+
   const root = createRoot(canvas);
   const hud = canvas.addComponent(GameHUD);
   const resultPanel = canvas.addComponent(ResultPanel);
@@ -473,6 +499,299 @@ function mountGame(canvas: Node): void {
   });
 }
 
+function mountSoloGame(canvas: Node): void {
+  const root = createRoot(canvas);
+  const hud = canvas.addComponent(GameHUD);
+  const resultPanel = canvas.addComponent(ResultPanel);
+  const mapManager = canvas.addComponent(MapManager);
+  const mapRoot = createNode('RuntimeSoloMapRoot', 820, 360);
+  const propNodes = new Map<string, Node>();
+  const playerNodes = new Map<string, RuntimeActorNode>();
+  const inputState = {
+    moveX: 0,
+    moveY: 0,
+    engine: null as LocalGameEngine | null,
+    computerSeeker: new SoloComputerSeekerController({ humanPlayerId: SOLO_PLAYER_ID }),
+    latestSnapshot: null as LocalGameSnapshot | null
+  };
+  let lastTickMs = Date.now();
+
+  addPanel(root, 960, 640, new Color(15, 23, 42, 255));
+  addLabel(root, 'Solo Practice', 0, 272, 28, new Color(248, 250, 252, 255), 820, 38);
+  const stateLabel = addLabel(root, 'Loading solo match...', 0, 236, 18, new Color(226, 232, 240, 255), 840, 32);
+  mapRoot.setPosition(new Vec3(0, 30, 0));
+  root.addChild(mapRoot);
+  inheritLayer(mapRoot, root);
+  addPanel(mapRoot, 820, 360, new Color(30, 41, 59, 255));
+  addMapGuide(mapRoot);
+  const blindLabel = addLabel(root, '', 0, 30, 26, new Color(226, 232, 240, 255), 760, 58);
+  const hudLabel = addLabel(root, '', 0, -178, 16, new Color(203, 213, 225, 255), 840, 56);
+  const playersLabel = addLabel(root, '', 0, -242, 15, new Color(203, 213, 225, 255), 840, 72);
+  const eventLabel = addLabel(root, '', 0, -292, 15, new Color(147, 197, 253, 255), 840, 28);
+  const touchLabel = addLabel(root, '', 0, -148, 14, new Color(148, 163, 184, 255), 840, 24);
+  const resultRoot = createNode('RuntimeSoloResultRoot', 760, 420);
+  resultRoot.setPosition(new Vec3(0, -8, 0));
+  root.addChild(resultRoot);
+  inheritLayer(resultRoot, root);
+  addPanel(resultRoot, 760, 420, new Color(15, 23, 42, 245));
+  const resultTitle = addLabel(resultRoot, '', 0, 150, 28, new Color(248, 250, 252, 255), 700, 38);
+  const resultCaptured = addLabel(resultRoot, '', 0, 104, 20, new Color(226, 232, 240, 255), 700, 32);
+  const resultScores = addLabel(resultRoot, '', -170, 8, 17, new Color(203, 213, 225, 255), 320, 150);
+  const resultRanking = addLabel(resultRoot, '', 190, 8, 17, new Color(203, 213, 225, 255), 320, 150);
+  const resultNext = addLabel(resultRoot, '', 0, -106, 18, new Color(147, 197, 253, 255), 700, 30);
+  const resultStatus = addLabel(resultRoot, '', 0, -150, 16, new Color(248, 113, 113, 255), 700, 28);
+  const restartButton = addButton(resultRoot, 'Restart Solo', -88, -190, 170, 42, () => {
+    startSoloMatch();
+    resultStatus.string = '';
+  });
+  const lobbyButton = addButton(resultRoot, 'Lobby', 110, -190, 130, 42, () => {
+    sessionState.startMultiplayerMode();
+    new SceneLoader().load(SceneName.Lobby);
+  });
+  resultRoot.active = false;
+
+  addButton(root, 'Up', -372, -230, 70, 40, () => setMove(0, 1));
+  addButton(root, 'Left', -446, -276, 70, 40, () => setMove(-1, 0));
+  addButton(root, 'Stop', -372, -276, 70, 40, () => setMove(0, 0));
+  addButton(root, 'Right', -298, -276, 70, 40, () => setMove(1, 0));
+  addButton(root, 'Down', -372, -322, 70, 40, () => setMove(0, -1));
+  const actionLabel = addLabel(root, 'Action', 372, -280, 16, new Color(226, 232, 240, 255), 170, 28);
+  addButton(root, 'Action', 372, -320, 130, 46, () => useAction());
+  const touchInputCleanup = installWeChatGameTouchInput(setMove, useAction);
+  touchLabel.string = touchInputCleanup
+    ? 'Touch controls active: left move, right action'
+    : 'Button controls active';
+
+  function startSoloMatch(): void {
+    resources.load(ResourcePath.GameConfig, JsonAsset, (gameError, gameAsset) => {
+      if (gameError || !gameAsset) {
+        stateLabel.string = 'Failed to load solo game config.';
+        return;
+      }
+
+      resources.load(ResourcePath.KitchenMap, JsonAsset, (mapError, mapAsset) => {
+        if (mapError || !mapAsset) {
+          stateLabel.string = 'Failed to load solo map.';
+          return;
+        }
+
+        const playerName = sessionState.getPlayerName() || 'Solo Player';
+        sessionState.startSoloMode(playerName, SOLO_PLAYER_ID);
+        const computerCount = sessionState.getSoloComputerCount();
+        mapManager.loadMap(mapAsset.json as LocalMapConfigInput);
+        inputState.engine = new LocalGameEngine(
+          createLocalGameSetupFromMap(
+            mapManager.getLoadedMapState(),
+            gameAsset.json as GameConfig,
+            createSoloPlayers(playerName, computerCount)
+          )
+        );
+        inputState.computerSeeker.reset();
+        inputState.moveX = 0;
+        inputState.moveY = 0;
+        resultPanel.hide();
+        resultRoot.active = false;
+        propNodes.clear();
+        playerNodes.clear();
+        mapRoot.removeAllChildren();
+        addPanel(mapRoot, 820, 360, new Color(30, 41, 59, 255));
+        addMapGuide(mapRoot);
+        lastTickMs = Date.now();
+        renderSnapshot(inputState.engine.getSnapshot());
+      });
+    });
+  }
+
+  function setMove(moveX: number, moveY: number): void {
+    inputState.moveX = moveX;
+    inputState.moveY = moveY;
+    inputState.engine?.setMovementInput({
+      playerId: SOLO_PLAYER_ID,
+      direction: { x: moveX, y: moveY }
+    });
+  }
+
+  function useAction(): void {
+    const engine = inputState.engine;
+    const snapshot = inputState.latestSnapshot;
+    if (!engine || !snapshot) {
+      return;
+    }
+
+    const localPlayer = getSoloLocalPlayer(snapshot);
+    if (!localPlayer) {
+      return;
+    }
+
+    if (localPlayer.role === 'seeker') {
+      const result = engine.attack(SOLO_PLAYER_ID);
+      eventLabel.string = result.accepted
+        ? `Attack: ${result.destroyedPropIds.length} props, ${result.capturedPlayerIds.length} hiders`
+        : `Attack ignored: ${result.reason ?? 'not available'}`;
+    } else {
+      const switched = engine.switchDisguise(SOLO_PLAYER_ID);
+      eventLabel.string = switched ? `Switched to ${getSoloLocalPlayer(engine.getSnapshot())?.currentPropId ?? ''}` : '';
+    }
+
+    renderSnapshot(engine.getSnapshot());
+  }
+
+  function renderSnapshot(snapshot: LocalGameSnapshot): void {
+    inputState.latestSnapshot = snapshot;
+    const localPlayer = getSoloLocalPlayer(snapshot);
+    const hiders = snapshot.players.filter((player) => player.role === 'hider');
+    const capturedHiders = hiders.filter((player) => player.captured);
+    const isBlindSeeker = localPlayer?.role === 'seeker' && snapshot.phase === 'hide';
+    hud.updateViewModel({
+      phase: snapshot.phase,
+      countdownMs: snapshot.phaseRemainingMs,
+      role: localPlayer?.role ?? 'spectator',
+      attackCountRemaining: snapshot.attackCountRemaining,
+      remainingAttacks: snapshot.attackCountRemaining,
+      currentPropId: localPlayer?.currentPropId ?? null,
+      isCaptured: localPlayer?.captured ?? false,
+      currentScore: localPlayer?.score ?? null,
+      capturedCount: capturedHiders.length,
+      totalHiders: hiders.length,
+      scores: snapshot.players.map((player) => ({
+        playerId: player.playerId,
+        displayName: player.displayName,
+        score: player.score
+      })),
+      v2Objective: { enabled: false, label: '', progressText: '', completed: false, rewardText: '', hintStatus: 'none' },
+      v2AmbientEvent: { enabled: false, status: 'none', title: '', timeLeftMs: null, publicAreaLabel: '' }
+    });
+
+    const display = hud.getDisplayState();
+    stateLabel.string = `${display.phaseText} | ${display.countdownText} | round ${snapshot.roundIndex + 1}`;
+    hudLabel.string = `You: ${display.roleText} | Captured ${display.capturedText} | Attacks ${snapshot.attackCountRemaining} | Move ${inputState.moveX},${inputState.moveY}`;
+    playersLabel.string = snapshot.players
+      .map((player) => `${player.displayName}: ${player.role}, ${player.state}, score ${player.score}`)
+      .join('\n');
+    actionLabel.string = localPlayer?.role === 'seeker' ? 'Cone Attack' : 'Switch Prop';
+    mapRoot.active = !isBlindSeeker;
+    blindLabel.string = isBlindSeeker ? 'Hiders are arranging the scene' : '';
+    renderSoloProps(snapshot);
+    renderSoloPlayers(snapshot);
+
+    if (snapshot.phase === 'result' || snapshot.phase === 'match_end') {
+      showSoloResult(snapshot);
+    } else {
+      resultRoot.active = false;
+      resultPanel.hide();
+    }
+  }
+
+  function renderSoloProps(snapshot: LocalGameSnapshot): void {
+    for (const prop of snapshot.props) {
+      let node = propNodes.get(prop.instanceId);
+      if (!node) {
+        node = createMapToken(prop.propId, getPropColor(prop.propId), 24, 24);
+        mapRoot.addChild(node);
+        inheritLayer(node, mapRoot);
+        propNodes.set(prop.instanceId, node);
+      }
+
+      node.active = !prop.destroyed;
+      node.setPosition(toMapPosition(prop.position.x, prop.position.y));
+    }
+  }
+
+  function renderSoloPlayers(snapshot: LocalGameSnapshot): void {
+    for (const player of snapshot.players) {
+      let actor = playerNodes.get(player.playerId);
+      if (!actor) {
+        actor = createActorToken(player.displayName);
+        mapRoot.addChild(actor.node);
+        inheritLayer(actor.node, mapRoot);
+        playerNodes.set(player.playerId, actor);
+      }
+
+      const hidden = player.state === 'invisible_in_preview' || player.state === 'seeker_locked';
+      actor.node.active = !hidden;
+      actor.node.setPosition(toMapPosition(player.position.x, player.position.y));
+      actor.label.string =
+        player.role === 'hider' && player.state !== 'hider_moving_as_character'
+          ? player.currentPropId
+          : player.displayName;
+      actor.badge.fillColor = getPlayerColor(player.role, player.captured);
+      actor.badge.clear();
+      actor.badge.circle(0, 5, 14);
+      actor.badge.fill();
+    }
+  }
+
+  function showSoloResult(snapshot: LocalGameSnapshot): void {
+    const result = snapshot.lastRoundResult;
+    const hiders = snapshot.players.filter((player) => player.role === 'hider');
+    const capturedHiders = hiders.filter((player) => player.captured);
+    const nextSeekerId = snapshot.matchEnded ? null : snapshot.players[snapshot.seekerIndex + 1]?.playerId ?? null;
+    const resultViewModel = {
+      roundIndex: snapshot.roundIndex + 1,
+      seekerId: result?.seekerId ?? snapshot.players[snapshot.seekerIndex]?.playerId ?? '',
+      capturedCount: capturedHiders.length,
+      totalHiders: hiders.length,
+      nextSeekerId,
+      matchEnded: snapshot.matchEnded,
+      scoreDeltas: snapshot.players.map((player) => {
+        const delta = result?.scoreDeltas
+          .filter((scoreDelta) => scoreDelta.playerId === player.playerId)
+          .reduce((total, scoreDelta) => total + scoreDelta.delta, 0) ?? 0;
+        return {
+          playerId: player.playerId,
+          displayName: player.displayName,
+          role: player.role,
+          delta,
+          totalScore: player.score,
+          captured: player.captured
+        };
+      })
+    };
+    if (resultPanel.isVisible()) {
+      resultPanel.updateViewModel(resultViewModel);
+    } else {
+      resultPanel.show(resultViewModel);
+    }
+    renderSoloResultPanel();
+  }
+
+  function renderSoloResultPanel(): void {
+    const state = resultPanel.getDisplayState();
+    resultRoot.active = resultPanel.isVisible();
+    resultTitle.string = state.titleText;
+    resultCaptured.string = state.capturedText;
+    resultScores.string = state.scoreLines.join('\n');
+    resultRanking.string = state.rankingLines.join('\n');
+    resultNext.string = state.matchEndText || state.nextSeekerText;
+    resultStatus.string = '';
+    restartButton.active = state.restartButtonVisible;
+    lobbyButton.active = state.restartButtonVisible;
+  }
+
+  const tickTimer = setInterval(() => {
+    if (!inputState.engine) {
+      return;
+    }
+
+    const now = Date.now();
+    const deltaMs = now - lastTickMs;
+    lastTickMs = now;
+    let snapshot = inputState.engine.tick(deltaMs);
+    const computerEvent = inputState.computerSeeker.update(inputState.engine, snapshot, deltaMs);
+    if (computerEvent) {
+      eventLabel.string = computerEvent;
+      snapshot = inputState.engine.getSnapshot();
+    }
+    renderSnapshot(snapshot);
+  }, 100);
+
+  startSoloMatch();
+  addDestroyCleanup(canvas, () => {
+    clearInterval(tickTimer);
+    touchInputCleanup?.();
+  });
+}
+
 function installWeChatGameTouchInput(
   setMove: (moveX: number, moveY: number) => void,
   sendAction: () => void
@@ -563,6 +882,23 @@ function getLocalMatchPlayer(message: ServerStateMessage): ServerStateMessage['p
 
   const playerName = sessionState.getPlayerName();
   return message.players.find((player) => player.displayName === playerName) ?? null;
+}
+
+function getSoloLocalPlayer(snapshot: LocalGameSnapshot): LocalGameSnapshot['players'][number] | null {
+  return snapshot.players.find((player) => player.playerId === SOLO_PLAYER_ID) ?? null;
+}
+
+function createSoloPlayers(
+  playerName: string,
+  computerCount: number
+): Array<{ playerId: string; displayName: string; startFacing?: { x: number; y: number } }> {
+  return [
+    { playerId: SOLO_PLAYER_ID, displayName: playerName, startFacing: { x: 0, y: -1 } },
+    ...Array.from({ length: computerCount }, (_, index) => ({
+      playerId: `solo_computer_${index + 1}`,
+      displayName: `Computer ${index + 1}`
+    }))
+  ];
 }
 
 function getPropColor(propConfigId: string): Color {

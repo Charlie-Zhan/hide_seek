@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { LocalGameEngine } from '../assets/scripts/gameplay/LocalGameEngine';
+import { SoloComputerSeekerController } from '../assets/scripts/gameplay/SoloComputerSeekerController';
 import {
   PlayerRole,
   PlayerState,
@@ -63,6 +64,27 @@ describe('LocalGameEngine Phase 01 rules', () => {
     assert.equal(engine.switchDisguise('p2'), true);
     assert.equal(engine.switchDisguise('p2'), true);
     assert.equal(getPlayer(engine, 'p2').currentPropId, 'plant_pot');
+  });
+
+  it('rejects hider disguise switching during Preview', () => {
+    const engine = createEngine();
+    const before = getPlayer(engine, 'p2').currentPropId;
+
+    assert.equal(engine.getSnapshot().phase, RoundPhase.Preview);
+    assert.equal(engine.switchDisguise('p2'), false);
+    assert.equal(getPlayer(engine, 'p2').currentPropId, before);
+  });
+
+  it('rejects hider disguise switching during Result', () => {
+    const engine = createEngine();
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    const before = getPlayer(engine, 'p2').currentPropId;
+
+    assert.equal(engine.getSnapshot().phase, RoundPhase.Result);
+    assert.equal(engine.switchDisguise('p2'), false);
+    assert.equal(getPlayer(engine, 'p2').currentPropId, before);
   });
 
   it('lets Seek attacks destroy multiple props and capture hiders in the sector', () => {
@@ -134,6 +156,83 @@ describe('LocalGameEngine Phase 01 rules', () => {
 
     assert.equal(snapshot.phase, RoundPhase.MatchEnd);
     assert.equal(snapshot.matchEnded, true);
+  });
+
+  it('supports solo practice with four computer players for a five-round match', () => {
+    const engine = createEngine({
+      players: [
+        {
+          playerId: 'solo_player_1',
+          displayName: 'Human',
+          startPosition: { x: 0, y: 0 },
+          startFacing: { x: 1, y: 0 }
+        },
+        { playerId: 'computer_1', displayName: 'Computer 1', startPosition: { x: 80, y: 0 } },
+        { playerId: 'computer_2', displayName: 'Computer 2', startPosition: { x: 100, y: 20 } },
+        { playerId: 'computer_3', displayName: 'Computer 3', startPosition: { x: -80, y: 0 } },
+        { playerId: 'computer_4', displayName: 'Computer 4', startPosition: { x: -100, y: 20 } }
+      ]
+    });
+
+    const seekerIds: string[] = [];
+    let snapshot = engine.getSnapshot();
+    seekerIds.push(snapshot.players[snapshot.seekerIndex]?.playerId ?? '');
+
+    while (!snapshot.matchEnded) {
+      snapshot = engine.debugForceNextPhase();
+      if (snapshot.phase === RoundPhase.Preview && !snapshot.matchEnded) {
+        seekerIds.push(snapshot.players[snapshot.seekerIndex]?.playerId ?? '');
+      }
+    }
+
+    assert.deepEqual(seekerIds, ['solo_player_1', 'computer_1', 'computer_2', 'computer_3', 'computer_4']);
+    assert.equal(snapshot.roundIndex, 5);
+    assert.equal(snapshot.matchEnded, true);
+  });
+
+  it('lets a solo computer seeker chase moving hiders and use normal cone attacks', () => {
+    const engine = createEngine({
+      players: [
+        {
+          playerId: 'human',
+          displayName: 'Human',
+          startPosition: { x: 80, y: 0 },
+          initialPropId: 'wooden_crate'
+        },
+        {
+          playerId: 'computer',
+          displayName: 'Computer',
+          startPosition: { x: 0, y: 0 },
+          startFacing: { x: 1, y: 0 }
+        }
+      ],
+      props: []
+    });
+    const computerSeeker = new SoloComputerSeekerController({
+      humanPlayerId: 'human',
+      attackIntervalMs: 0,
+      attackDistancePx: 120
+    });
+
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    engine.debugForceNextPhase();
+    engine.setMovementInput({ playerId: 'human', direction: { x: 1, y: 0 } });
+    let snapshot = engine.tick(100);
+
+    assert.equal(snapshot.phase, RoundPhase.Seek);
+    assert.equal(getPlayer(engine, 'computer').role, PlayerRole.Seeker);
+
+    const eventText = computerSeeker.update(engine, snapshot, 100);
+    snapshot = engine.getSnapshot();
+
+    assert.match(eventText ?? '', /Computer attacked/);
+    assert.equal(getPlayer(engine, 'human').captured, true);
+    assert.equal(snapshot.phase, RoundPhase.Result);
+    assert.equal(snapshot.lastRoundResult?.endedReason, 'all_hiders_captured');
   });
 });
 
