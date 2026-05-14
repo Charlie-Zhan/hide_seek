@@ -14,10 +14,14 @@ import { SeekerBlindOverlay } from '../assets/scripts/ui/SeekerBlindOverlay';
 import { weChatPlatform } from '../assets/scripts/wechat/WeChatPlatform';
 
 describe('Phase 06 UI display state polish', () => {
+  const runtime = globalThis as { __PROP_HIDE_SEEK_ENABLE_DEV_ROOM_HELPER__?: unknown };
   const originalNetworkMethods = {
     connect: roomNetworkClient.connect.bind(roomNetworkClient),
     send: roomNetworkClient.send.bind(roomNetworkClient),
-    isConnected: roomNetworkClient.isConnected.bind(roomNetworkClient)
+    isConnected: roomNetworkClient.isConnected.bind(roomNetworkClient),
+    getServerUrl: roomNetworkClient.getServerUrl.bind(roomNetworkClient),
+    setServerUrl: roomNetworkClient.setServerUrl.bind(roomNetworkClient),
+    disconnect: roomNetworkClient.disconnect.bind(roomNetworkClient)
   };
   let sentMessages: ClientNetworkMessage[] = [];
   let connectCalls = 0;
@@ -28,10 +32,12 @@ describe('Phase 06 UI display state polish', () => {
     sentMessages = [];
     connectCalls = 0;
     restoreRoomNetworkClient(originalNetworkMethods);
+    delete runtime.__PROP_HIDE_SEEK_ENABLE_DEV_ROOM_HELPER__;
   });
 
   afterEach(() => {
     restoreRoomNetworkClient(originalNetworkMethods);
+    delete runtime.__PROP_HIDE_SEEK_ENABLE_DEV_ROOM_HELPER__;
     weChatPlatform.clearPlayerProfile();
     sessionState.reset();
   });
@@ -50,6 +56,7 @@ describe('Phase 06 UI display state polish', () => {
     assert.equal(display.titleText, 'Prop Hide & Seek');
     assert.equal(display.playerNameText, 'Mia');
     assert.equal(display.joinRoomIdText, 'SHARE_9');
+    assert.match(display.serverUrlText, /^ws:\/\//);
     assert.equal(display.gameplayEntryText, 'How to Play');
     assert.ok(display.gameplaySummaryLines.some((line) => line.includes('limited cone attacks')));
     assert.equal(display.connectionStatusText, 'Connected');
@@ -106,6 +113,41 @@ describe('Phase 06 UI display state polish', () => {
     assert.equal(lobby.getDisplayState().joinRoomIdText, 'ROOM_9');
   });
 
+  it('applies a launch server URL before joining a shared room', () => {
+    stubRoomNetworkClient({ connected: false, sentMessages, onConnect: () => connectCalls += 1 });
+    const lobby = new LobbyUI();
+
+    assert.equal(lobby.applyLaunchServerUrl('ws://192.168.1.50:8787'), true);
+    assert.equal(lobby.applyLaunchRoomId('room_9'), true);
+
+    assert.equal(lobby.getDisplayState().serverUrlText, 'ws://192.168.1.50:8787');
+    assert.equal(connectCalls, 1);
+    assert.equal(sentMessages.length, 0);
+  });
+
+  it('applies combined onShow launch options for share re-entry', () => {
+    stubRoomNetworkClient({ connected: true, sentMessages });
+    const lobby = new LobbyUI();
+
+    assert.equal(
+      lobby.applyLaunchOptions({
+        query: {
+          serverUrl: 'ws://192.168.1.66:8787',
+          roomId: 'room_onshow'
+        }
+      }),
+      true
+    );
+
+    assert.equal(lobby.getDisplayState().serverUrlText, 'ws://192.168.1.66:8787');
+    assert.equal(lobby.getDisplayState().joinRoomIdText, 'ROOM_ONSHOW');
+    assert.deepEqual(sentMessages.at(-1), {
+      type: 'join_room',
+      roomId: 'ROOM_ONSHOW',
+      playerName: 'Player'
+    });
+  });
+
   it('exposes Room code, player list, share, ready, start, and network state', () => {
     const room = createRoomState();
     sessionState.setRoom(room, 'p1');
@@ -122,10 +164,25 @@ describe('Phase 06 UI display state polish', () => {
     assert.equal(display.readinessSummaryText, '3/3 Ready');
     assert.equal(display.shareButtonText, 'Share');
     assert.equal(display.canShare, true);
+    assert.equal(display.canAddDevTestPlayer, false);
     assert.equal(roomUI.shareRoom(), false);
     assert.equal(display.canStart, true);
     assert.equal(display.networkStatusText, 'Network: Connected');
     assert.deepEqual(display.playerList.map((player) => player.nameText), ['Owner', 'Hider A', 'Hider B']);
+  });
+
+  it('exposes the DevTools test player helper only when explicitly enabled', () => {
+    const room = createRoomState();
+    sessionState.setRoom(room, 'p1');
+    runtime.__PROP_HIDE_SEEK_ENABLE_DEV_ROOM_HELPER__ = true;
+
+    const roomUI = new RoomUI();
+    roomUI.updateRoom(room);
+
+    const display = roomUI.getDisplayState();
+
+    assert.equal(display.devTestPlayerButtonText, 'Test Player');
+    assert.equal(display.canAddDevTestPlayer, true);
   });
 
   it('separates seeker and hider HUD state and emphasizes the final 5 seconds', () => {
@@ -297,35 +354,54 @@ function stubRoomNetworkClient(options: {
   connected: boolean;
   sentMessages: ClientNetworkMessage[];
   onConnect?: () => void;
+  serverUrl?: string;
 }): void {
   const network = roomNetworkClient as unknown as {
     connect: () => void;
     send: (message: ClientNetworkMessage) => boolean;
     isConnected: () => boolean;
+    getServerUrl: () => string;
+    setServerUrl: (serverUrl: string) => void;
+    disconnect: () => void;
   };
 
+  let serverUrl = options.serverUrl ?? 'ws://127.0.0.1:8787';
   network.isConnected = () => options.connected;
   network.connect = () => options.onConnect?.();
   network.send = (message: ClientNetworkMessage) => {
     options.sentMessages.push(message);
     return true;
   };
+  network.getServerUrl = () => serverUrl;
+  network.setServerUrl = (nextServerUrl: string) => {
+    serverUrl = nextServerUrl;
+  };
+  network.disconnect = () => undefined;
 }
 
 function restoreRoomNetworkClient(original: {
   connect: typeof roomNetworkClient.connect;
   send: typeof roomNetworkClient.send;
   isConnected: typeof roomNetworkClient.isConnected;
+  getServerUrl: typeof roomNetworkClient.getServerUrl;
+  setServerUrl: typeof roomNetworkClient.setServerUrl;
+  disconnect: typeof roomNetworkClient.disconnect;
 }): void {
   const network = roomNetworkClient as unknown as {
     connect: typeof roomNetworkClient.connect;
     send: typeof roomNetworkClient.send;
     isConnected: typeof roomNetworkClient.isConnected;
+    getServerUrl: typeof roomNetworkClient.getServerUrl;
+    setServerUrl: typeof roomNetworkClient.setServerUrl;
+    disconnect: typeof roomNetworkClient.disconnect;
   };
 
   network.connect = original.connect;
   network.send = original.send;
   network.isConnected = original.isConnected;
+  network.getServerUrl = original.getServerUrl;
+  network.setServerUrl = original.setServerUrl;
+  network.disconnect = original.disconnect;
 }
 
 function createRoomState(): PublicRoomState {

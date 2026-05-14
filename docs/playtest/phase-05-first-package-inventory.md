@@ -4,10 +4,10 @@
 
 The first package should contain only the startup flow, lobby/room screens, the first MVP map config, core UI, touch input, network client, and base character/prop metadata needed for `kitchen_01`.
 
-Current repository note: the checked-in Cocos `.scene` files are placeholder
-manifests used to preserve scene names and intended hierarchy. Do not treat this
-inventory as proof that a real Cocos Creator visual scene export has been
-completed; record that evidence after opening/exporting the project manually.
+Current export note: `client/HideSeek/wechatgame` contains a Cocos Creator
+3.8.8 WeChat Mini Game export with `game.js`, `game.json`, `project.config.json`,
+and the generated `assets/main` bundle. The export launches
+`db://assets/scenes/Lobby.scene`.
 
 ## Included
 
@@ -26,4 +26,18 @@ completed; record that evidence after opening/exporting the project manually.
 
 ## Size Record
 
-Actual WeChat package size must be recorded after exporting from Cocos Creator 3.x to the WeChat Minigame target. This repository currently records the intended first-package boundary and prevents unrelated later-phase assets from entering the MVP package.
+Actual WeChat package size recorded from `client/HideSeek/wechatgame`:
+
+```text
+Date: 2026-05-13 local
+Target: Cocos Creator 3.8.8 / WeChat Mini Game
+Export path: client/HideSeek/wechatgame
+Total files: 42
+Actual WeChat package size: 4,736,797 bytes / 4.52 MiB
+Orientation: landscapeRight
+Launch scene: db://assets/scenes/Lobby.scene
+```
+
+The current package stays inside the MVP first-package boundary: startup,
+Lobby/Room/Game runtime bridge, first map config, base UI, touch input, network
+client, and core character/prop metadata.

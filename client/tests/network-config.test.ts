@@ -6,19 +6,22 @@ import {
   ROOM_SERVER_URL_GLOBAL_KEY,
   ROOM_SERVER_URL_STORAGE_KEY,
   normalizeRoomServerUrl,
-  resolveRoomServerUrl
+  resolveRoomServerUrl,
+  saveRoomServerUrl
 } from '../assets/scripts/network/NetworkConfig';
 
 interface RuntimeRoomServerConfig {
   __PROP_HIDE_SEEK_ROOM_SERVER_URL__?: unknown;
   __PROP_HIDE_SEEK_CONFIG__?: { roomServerUrl?: unknown };
-  wx?: { getStorageSync?: (key: string) => unknown };
+  wx?: { getStorageSync?: (key: string) => unknown; setStorageSync?: (key: string, value: string) => void };
+  localStorage?: { getItem?: (key: string) => string | null; setItem?: (key: string, value: string) => void };
 }
 
 const runtime = globalThis as RuntimeRoomServerConfig;
 const originalGlobalUrl = runtime.__PROP_HIDE_SEEK_ROOM_SERVER_URL__;
 const originalGlobalConfig = runtime.__PROP_HIDE_SEEK_CONFIG__;
 const originalWx = runtime.wx;
+const originalLocalStorage = runtime.localStorage;
 
 describe('NetworkConfig', () => {
   afterEach(() => {
@@ -34,6 +37,7 @@ describe('NetworkConfig', () => {
   });
 
   it('falls back to the local development endpoint', () => {
+    assert.equal(DEFAULT_ROOM_SERVER_URL, 'ws://127.0.0.1:8787');
     assert.equal(resolveRoomServerUrl(), DEFAULT_ROOM_SERVER_URL);
   });
 
@@ -61,6 +65,24 @@ describe('NetworkConfig', () => {
     };
 
     assert.equal(resolveRoomServerUrl(), 'ws://10.0.0.8:8787');
+  });
+
+  it('saves room server URL to runtime, WeChat storage, and browser storage when available', () => {
+    const storedValues = new Map<string, string>();
+    const browserValues = new Map<string, string>();
+    runtime.wx = {
+      setStorageSync: (key, value) => storedValues.set(key, value)
+    };
+    runtime.localStorage = {
+      getItem: (key) => browserValues.get(key) ?? null,
+      setItem: (key, value) => browserValues.set(key, value)
+    };
+
+    assert.equal(saveRoomServerUrl(' ws://192.168.1.81:8787 '), 'ws://192.168.1.81:8787');
+    assert.equal(runtime.__PROP_HIDE_SEEK_ROOM_SERVER_URL__, 'ws://192.168.1.81:8787');
+    assert.equal(storedValues.get(ROOM_SERVER_URL_STORAGE_KEY), 'ws://192.168.1.81:8787');
+    assert.equal(browserValues.get(ROOM_SERVER_URL_STORAGE_KEY), 'ws://192.168.1.81:8787');
+    assert.equal(saveRoomServerUrl('https://wrong.example.com'), null);
   });
 
   it('ignores invalid override values', () => {
@@ -99,5 +121,11 @@ function restoreRuntimeOverrides(): void {
     delete runtime.wx;
   } else {
     runtime.wx = originalWx;
+  }
+
+  if (originalLocalStorage === undefined) {
+    delete runtime.localStorage;
+  } else {
+    runtime.localStorage = originalLocalStorage;
   }
 }

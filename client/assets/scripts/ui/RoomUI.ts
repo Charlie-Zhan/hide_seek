@@ -6,6 +6,7 @@ import { SceneLoader } from '../core/SceneLoader';
 import { sessionState } from '../core/SessionState';
 import { MessageRouter } from '../network/MessageRouter';
 import {
+  NetworkClient,
   NetworkConnectionState,
   roomNetworkClient
 } from '../network/NetworkClient';
@@ -31,6 +32,7 @@ export interface RoomDisplayState {
   readyButtonText: string;
   startButtonText: string;
   shareButtonText: string;
+  devTestPlayerButtonText: string;
   backButtonText: string;
   connectionStatusText: string;
   networkStatusText: string;
@@ -38,6 +40,7 @@ export interface RoomDisplayState {
   canStart: boolean;
   canSetReady: boolean;
   canShare: boolean;
+  canAddDevTestPlayer: boolean;
 }
 
 @ccclass('RoomUI')
@@ -53,6 +56,10 @@ export class RoomUI extends Component {
   });
   private stopConnectionState: (() => void) | null = null;
   private stopNetworkError: (() => void) | null = null;
+  private devTestClient: NetworkClient | null = null;
+  private stopDevTestNetworkError: (() => void) | null = null;
+  private stopDevTestMessage: (() => void) | null = null;
+  private stopDevTestState: (() => void) | null = null;
   private room: PublicRoomState | null = sessionState.getLatestRoom();
   private connectionStatus = roomNetworkClient.getConnectionState();
   private errorText = '';
@@ -67,13 +74,19 @@ export class RoomUI extends Component {
     this.router.stop();
     this.stopConnectionState?.();
     this.stopNetworkError?.();
+    this.stopDevTestNetworkError?.();
+    this.stopDevTestMessage?.();
+    this.stopDevTestState?.();
+    this.devTestClient?.disconnect();
   }
 
   public updateRoom(room: PublicRoomState): void {
     this.room = cloneRoom(room);
     sessionState.setRoom(room);
     this.errorText = '';
-    weChatPlatform.registerRoomShare(room.roomId);
+    weChatPlatform.registerRoomShare(room.roomId, {
+      serverUrl: roomNetworkClient.getServerUrl()
+    });
   }
 
   public setReady(ready: boolean): void {
@@ -101,11 +114,57 @@ export class RoomUI extends Component {
       return false;
     }
 
-    const shared = weChatPlatform.shareRoom(this.room.roomId);
+    const shared = weChatPlatform.shareRoom(this.room.roomId, {
+      serverUrl: roomNetworkClient.getServerUrl()
+    });
     if (!shared) {
       this.setError('Share is available in WeChat.');
     }
     return shared;
+  }
+
+  public addDevTestPlayer(): boolean {
+    if (!isDevRoomHelperEnabled()) {
+      this.setError('Test player is only available in WeChat DevTools.');
+      return false;
+    }
+
+    if (!this.room?.roomId) {
+      this.setError('Create a room before adding a test player.');
+      return false;
+    }
+
+    if (this.room.players.some((player) => player.playerName === DEV_TEST_PLAYER_NAME)) {
+      this.setError('Test player is already in this room.');
+      return false;
+    }
+
+    this.stopDevTestNetworkError?.();
+    this.stopDevTestMessage?.();
+    this.stopDevTestState?.();
+    this.devTestClient?.disconnect();
+
+    const client = new NetworkClient();
+    this.devTestClient = client;
+    this.stopDevTestNetworkError = client.onError((message) => this.setError(`Test player: ${message}`));
+    this.stopDevTestMessage = client.onMessage((message) => {
+      if (message.type === 'room_joined') {
+        client.send({ type: 'set_ready', ready: true });
+        this.errorText = '';
+      }
+    });
+    this.stopDevTestState = client.onStateChange((state) => {
+      if (state === NetworkConnectionState.Connected && this.room?.roomId) {
+        client.send({
+          type: 'join_room',
+          roomId: this.room.roomId,
+          playerName: DEV_TEST_PLAYER_NAME
+        });
+      }
+    });
+    client.connect(roomNetworkClient.getServerUrl());
+    this.setError('Adding a DevTools test player...');
+    return true;
   }
 
   public leaveRoom(): void {
@@ -142,13 +201,15 @@ export class RoomUI extends Component {
       readyButtonText: localPlayer?.ready ? 'Cancel Ready' : 'Ready',
       startButtonText: 'Start',
       shareButtonText: 'Share',
+      devTestPlayerButtonText: 'Test Player',
       backButtonText: 'Back',
       connectionStatusText: connectionStateToText(this.connectionStatus),
       networkStatusText: `Network: ${connectionStateToText(this.connectionStatus)}`,
       errorText: this.errorText,
       canStart,
       canSetReady: Boolean(localPlayer) && this.room?.status === 'waiting',
-      canShare: Boolean(this.room?.roomId)
+      canShare: Boolean(this.room?.roomId),
+      canAddDevTestPlayer: isDevRoomHelperEnabled() && Boolean(this.room?.roomId) && this.room?.status === 'waiting'
     };
   }
 
@@ -177,6 +238,8 @@ export class RoomUI extends Component {
     this.errorText = message;
   }
 }
+
+const DEV_TEST_PLAYER_NAME = 'TestPlayer';
 
 function buildPlayerDisplayState(player: PublicRoomPlayer): RoomPlayerDisplayState {
   return {
@@ -220,4 +283,9 @@ function connectionStateToText(status: NetworkConnectionState): string {
 
 function exhaustive(value: never): never {
   throw new Error(`Unhandled connection state: ${value}`);
+}
+
+function isDevRoomHelperEnabled(): boolean {
+  const runtime = globalThis as { __PROP_HIDE_SEEK_ENABLE_DEV_ROOM_HELPER__?: unknown };
+  return runtime.__PROP_HIDE_SEEK_ENABLE_DEV_ROOM_HELPER__ === true || weChatPlatform.isDevToolsRuntime();
 }

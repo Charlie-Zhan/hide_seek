@@ -5,11 +5,12 @@ import { Logger } from '../core/Logger';
 import { SceneLoader } from '../core/SceneLoader';
 import { sessionState } from '../core/SessionState';
 import { MessageRouter } from '../network/MessageRouter';
+import { normalizeRoomServerUrl, saveRoomServerUrl } from '../network/NetworkConfig';
 import {
   NetworkConnectionState,
   roomNetworkClient
 } from '../network/NetworkClient';
-import { weChatPlatform } from '../wechat/WeChatPlatform';
+import { weChatPlatform, type WeChatLaunchOptions } from '../wechat/WeChatPlatform';
 
 const { ccclass } = _decorator;
 
@@ -20,6 +21,8 @@ export interface LobbyDisplayState {
   playerNameText: string;
   joinRoomIdLabelText: string;
   joinRoomIdText: string;
+  serverUrlLabelText: string;
+  serverUrlText: string;
   gameplayEntryText: string;
   gameplaySummaryLines: string[];
   connectionStatusText: string;
@@ -38,8 +41,10 @@ export class LobbyUI extends Component {
   });
   private stopConnectionState: (() => void) | null = null;
   private stopNetworkError: (() => void) | null = null;
+  private stopLaunchOptions: (() => void) | null = null;
   private playerName = sessionState.getPlayerName();
   private joinRoomId = '';
+  private serverUrl = roomNetworkClient.getServerUrl();
   private connectionStatus = roomNetworkClient.getConnectionState();
   private errorText = '';
   private pendingMessage: ClientRoomMessage | null = null;
@@ -51,13 +56,17 @@ export class LobbyUI extends Component {
       this.flushPendingMessage();
     });
     this.stopNetworkError = roomNetworkClient.onError((message) => this.setError(message));
-    this.applyLaunchRoomId(weChatPlatform.getLaunchRoomId());
+    this.applyLaunchOptions();
+    this.stopLaunchOptions = weChatPlatform.onShowLaunchOptions((options) => {
+      this.applyLaunchOptions(options);
+    });
   }
 
   protected onDestroy(): void {
     this.router.stop();
     this.stopConnectionState?.();
     this.stopNetworkError?.();
+    this.stopLaunchOptions?.();
   }
 
   public setPlayerName(playerName: string): void {
@@ -69,6 +78,27 @@ export class LobbyUI extends Component {
   public setJoinRoomId(roomId: string): void {
     this.joinRoomId = roomId.trim().toUpperCase();
     this.errorText = '';
+  }
+
+  public setServerUrl(serverUrl: string): boolean {
+    const normalizedUrl = normalizeRoomServerUrl(serverUrl);
+    if (!normalizedUrl) {
+      this.setError('Server URL must start with ws:// or wss://.');
+      return false;
+    }
+    if (isLikelyTruncatedDevToolsUrl(normalizedUrl, this.serverUrl)) {
+      this.setError(`Ignored truncated server URL. Using ${this.serverUrl}`);
+      return true;
+    }
+
+    this.serverUrl = normalizedUrl;
+    saveRoomServerUrl(normalizedUrl);
+    if (roomNetworkClient.getServerUrl() !== normalizedUrl) {
+      roomNetworkClient.disconnect();
+      roomNetworkClient.setServerUrl(normalizedUrl);
+    }
+    this.errorText = '';
+    return true;
   }
 
   public applyLaunchRoomId(roomId: string | null): boolean {
@@ -84,6 +114,20 @@ export class LobbyUI extends Component {
       playerName
     });
     return true;
+  }
+
+  public applyLaunchServerUrl(serverUrl: string | null): boolean {
+    if (!serverUrl) {
+      return false;
+    }
+
+    return this.setServerUrl(serverUrl);
+  }
+
+  public applyLaunchOptions(options?: WeChatLaunchOptions | null): boolean {
+    const serverApplied = this.applyLaunchServerUrl(weChatPlatform.getLaunchServerUrl(options));
+    const roomApplied = this.applyLaunchRoomId(weChatPlatform.getLaunchRoomId(options));
+    return serverApplied || roomApplied;
   }
 
   public setConnectionStatus(status: NetworkConnectionState | string): void {
@@ -129,6 +173,8 @@ export class LobbyUI extends Component {
       playerNameText: this.playerName,
       joinRoomIdLabelText: 'Room Code',
       joinRoomIdText: this.joinRoomId,
+      serverUrlLabelText: 'Server',
+      serverUrlText: this.serverUrl,
       gameplayEntryText: 'How to Play',
       gameplaySummaryLines: [
         'Preview: study the original prop layout.',
@@ -151,7 +197,7 @@ export class LobbyUI extends Component {
       return;
     }
 
-    roomNetworkClient.connect();
+    roomNetworkClient.connect(this.serverUrl);
     this.setConnectionStatus(NetworkConnectionState.Connecting);
   }
 
@@ -221,6 +267,14 @@ function connectionStateToText(status: NetworkConnectionState): string {
     default:
       return exhaustive(status);
   }
+}
+
+function isLikelyTruncatedDevToolsUrl(nextUrl: string, currentUrl: string): boolean {
+  if (nextUrl === currentUrl || !currentUrl.startsWith('ws://')) {
+    return false;
+  }
+
+  return currentUrl.startsWith(nextUrl.replace(/\/$/, '')) && nextUrl.length < currentUrl.length;
 }
 
 function exhaustive(value: never): never {
