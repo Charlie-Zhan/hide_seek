@@ -60,11 +60,43 @@ describe('Phase 06 UI display state polish', () => {
     assert.equal(display.gameplayEntryText, 'How to Play');
     assert.ok(display.gameplaySummaryLines.some((line) => line.includes('limited cone attacks')));
     assert.equal(display.connectionStatusText, 'Connected');
+    assert.equal(display.soloButtonText, 'Solo Practice');
+    assert.equal(display.soloComputerCountText, '2 Computer Players');
     assert.deepEqual(sentMessages.at(-1), {
       type: 'join_room',
       roomId: 'SHARE_9',
       playerName: 'Mia'
     });
+  });
+
+  it('starts solo practice from Lobby without a room server', () => {
+    const lobby = new LobbyUI();
+
+    lobby.setPlayerName('  Solo Mia  ');
+    lobby.setSoloComputerCount(4);
+    lobby.startSoloMode();
+
+    assert.equal(sessionState.isSoloMode(), true);
+    assert.equal(sessionState.getPlayerName(), 'Solo Mia');
+    assert.equal(sessionState.getPlayerId(), 'solo_player_1');
+    assert.equal(sessionState.getRoomId(), null);
+    assert.equal(sessionState.getSoloComputerCount(), 4);
+  });
+
+  it('clamps solo computer count between one and four', () => {
+    const lobby = new LobbyUI();
+
+    lobby.setSoloComputerCount(99);
+    let display = lobby.getDisplayState();
+    assert.equal(display.soloComputerCountText, '4 Computer Players');
+    assert.equal(display.canIncreaseSoloComputerCount, false);
+    assert.equal(display.canDecreaseSoloComputerCount, true);
+
+    lobby.setSoloComputerCount(-10);
+    display = lobby.getDisplayState();
+    assert.equal(display.soloComputerCountText, '1 Computer Player');
+    assert.equal(display.canIncreaseSoloComputerCount, true);
+    assert.equal(display.canDecreaseSoloComputerCount, false);
   });
 
   it('auto-joins a launch room with cached or default player identity', () => {

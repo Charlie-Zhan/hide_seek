@@ -85,4 +85,6 @@ export interface PlayerMovementInput {
 
 export const DEFAULT_HIDE_IDLE_DISGUISE_MS = 250;
 export const DEFAULT_PLAYER_RADIUS_PX = 18;
+export const MIN_LOCAL_PLAYERS = 2;
+export const MAX_LOCAL_PLAYERS = 5;
 

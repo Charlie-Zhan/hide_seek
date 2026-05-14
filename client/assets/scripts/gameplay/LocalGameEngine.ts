@@ -10,11 +10,13 @@ import { DisguiseController } from './DisguiseController';
 import {
   DEFAULT_HIDE_IDLE_DISGUISE_MS,
   DEFAULT_PLAYER_RADIUS_PX,
+  MAX_LOCAL_PLAYERS,
   type LocalAttackResult,
   type LocalGameSetup,
   type LocalGameSnapshot,
   type LocalPlayer,
   type LocalPropInstance,
+  MIN_LOCAL_PLAYERS,
   type PlayerMovementInput,
   PlayerRole,
   PlayerState,
@@ -40,8 +42,8 @@ export class LocalGameEngine {
   private resultScoredForRoundIndex: number | null = null;
 
   public constructor(private readonly setup: LocalGameSetup) {
-    if (setup.players.length < 2 || setup.players.length > 4) {
-      throw new Error('Local Phase 01 match requires 2 to 4 players.');
+    if (setup.players.length < MIN_LOCAL_PLAYERS || setup.players.length > MAX_LOCAL_PLAYERS) {
+      throw new Error(`Local match requires ${MIN_LOCAL_PLAYERS} to ${MAX_LOCAL_PLAYERS} players.`);
     }
 
     if (setup.availablePropIds.length === 0) {
@@ -62,8 +64,8 @@ export class LocalGameEngine {
   }
 
   public static createPlayers(playerCount: number): LocalGameSetup['players'] {
-    if (playerCount < 2 || playerCount > 4) {
-      throw new Error('Local Phase 01 match requires 2 to 4 players.');
+    if (playerCount < MIN_LOCAL_PLAYERS || playerCount > MAX_LOCAL_PLAYERS) {
+      throw new Error(`Local match requires ${MIN_LOCAL_PLAYERS} to ${MAX_LOCAL_PLAYERS} players.`);
     }
 
     return Array.from({ length: playerCount }, (_, index) => ({
@@ -109,6 +111,11 @@ export class LocalGameEngine {
     this.movementInputsByPlayerId.set(playerId, ZERO_VECTOR);
   }
 
+  public setFacingDirection(playerId: string, direction: Vector2): void {
+    const player = this.getPlayer(playerId);
+    player.facing = normalizeVector2(direction, player.facing);
+  }
+
   public tick(deltaMs: number): LocalGameSnapshot {
     const safeDeltaMs = Math.max(0, deltaMs);
     this.updateMovement(safeDeltaMs);
@@ -126,6 +133,11 @@ export class LocalGameEngine {
   }
 
   public switchDisguise(playerId: string): boolean {
+    const phase = this.roundManager.getPhase();
+    if (phase !== RoundPhase.Hide && phase !== RoundPhase.Seek) {
+      return false;
+    }
+
     const player = this.getPlayer(playerId);
     return this.disguiseController.switchToNextProp(player, this.availablePropIds);
   }
