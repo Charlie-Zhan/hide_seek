@@ -8,10 +8,16 @@ export interface WeChatLaunchOptions {
   query?: Record<string, unknown>;
 }
 
+export type WeChatLaunchOptionsHandler = (options: WeChatLaunchOptions) => void;
+
 export interface WeChatSharePayload {
   title: string;
   query: string;
   imageUrl?: string;
+}
+
+export interface WeChatShareRoomOptions extends Partial<WeChatSharePayload> {
+  serverUrl?: string | null;
 }
 
 export interface KeyValueStorage {
@@ -22,11 +28,14 @@ export interface KeyValueStorage {
 
 export interface WeChatMiniGameApi {
   getLaunchOptionsSync?(): WeChatLaunchOptions;
+  getSystemInfoSync?(): { platform?: string; brand?: string; model?: string };
   getStorageSync?(key: string): unknown;
   setStorageSync?(key: string, value: string): void;
   removeStorageSync?(key: string): void;
   onShareAppMessage?(factory: () => WeChatSharePayload): void;
   shareAppMessage?(payload: WeChatSharePayload): void;
+  onShow?(handler: WeChatLaunchOptionsHandler): void;
+  offShow?(handler: WeChatLaunchOptionsHandler): void;
 }
 
 export interface WeChatPlatformOptions {
@@ -121,15 +130,44 @@ export class WeChatPlatform {
     return readRoomIdFromLaunchOptions(options);
   }
 
-  public createShareRoomPayload(roomId: string, options: Partial<WeChatSharePayload> = {}): WeChatSharePayload {
+  public getLaunchServerUrl(launchOptions?: WeChatLaunchOptions | null): string | null {
+    const options = launchOptions ?? this.wx?.getLaunchOptionsSync?.() ?? null;
+    return readServerUrlFromLaunchOptions(options);
+  }
+
+  public onShowLaunchOptions(handler: WeChatLaunchOptionsHandler): (() => void) | null {
+    if (typeof this.wx?.onShow !== 'function') {
+      return null;
+    }
+
+    const onShow: WeChatLaunchOptionsHandler = (options) => handler(options ?? {});
+    this.wx.onShow(onShow);
+    return () => this.wx?.offShow?.(onShow);
+  }
+
+  public isDevToolsRuntime(): boolean {
+    if (!this.wx) {
+      return false;
+    }
+
+    try {
+      const info = this.wx.getSystemInfoSync?.();
+      return info?.platform === 'devtools';
+    } catch {
+      return false;
+    }
+  }
+
+  public createShareRoomPayload(roomId: string, options: WeChatShareRoomOptions = {}): WeChatSharePayload {
     const normalizedRoomId = normalizeRoomId(roomId);
     if (!normalizedRoomId) {
       throw new Error('A valid roomId is required to create a share payload.');
     }
 
+    const normalizedServerUrl = normalizeServerUrl(options.serverUrl);
     const payload: WeChatSharePayload = {
       title: normalizeNickname(options.title) ?? this.shareTitle,
-      query: `roomId=${encodeURIComponent(normalizedRoomId)}`
+      query: createShareQuery(normalizedRoomId, normalizedServerUrl)
     };
 
     const imageUrl = normalizeOptionalText(options.imageUrl) ?? this.shareImageUrl;
@@ -140,7 +178,7 @@ export class WeChatPlatform {
     return payload;
   }
 
-  public registerRoomShare(roomId: string, options: Partial<WeChatSharePayload> = {}): boolean {
+  public registerRoomShare(roomId: string, options: WeChatShareRoomOptions = {}): boolean {
     if (typeof this.wx?.onShareAppMessage !== 'function') {
       return false;
     }
@@ -149,7 +187,7 @@ export class WeChatPlatform {
     return true;
   }
 
-  public shareRoom(roomId: string, options: Partial<WeChatSharePayload> = {}): boolean {
+  public shareRoom(roomId: string, options: WeChatShareRoomOptions = {}): boolean {
     if (typeof this.wx?.shareAppMessage !== 'function') {
       return false;
     }
@@ -165,6 +203,14 @@ export function readRoomIdFromLaunchOptions(options: WeChatLaunchOptions | null 
   }
 
   return normalizeRoomId(options.query.roomId);
+}
+
+export function readServerUrlFromLaunchOptions(options: WeChatLaunchOptions | null | undefined): string | null {
+  if (!options || !isRecord(options.query)) {
+    return null;
+  }
+
+  return normalizeServerUrl(options.query.serverUrl);
 }
 
 export function normalizeRoomId(value: unknown): string | null {
@@ -196,6 +242,24 @@ function normalizePlayerProfile(value: unknown): PlayerProfile | null {
     nickname,
     avatarUrl: normalizeOptionalText(value.avatarUrl)
   };
+}
+
+function createShareQuery(roomId: string, serverUrl: string | null): string {
+  const parts = [`roomId=${encodeURIComponent(roomId)}`];
+  if (serverUrl) {
+    parts.push(`serverUrl=${encodeURIComponent(serverUrl)}`);
+  }
+
+  return parts.join('&');
+}
+
+function normalizeServerUrl(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return /^wss?:\/\/\S+$/i.test(trimmedValue) ? trimmedValue : null;
 }
 
 function createRuntimeStorage(wx: WeChatMiniGameApi | null): KeyValueStorage {

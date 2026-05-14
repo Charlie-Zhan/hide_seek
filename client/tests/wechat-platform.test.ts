@@ -5,6 +5,7 @@ import {
   DEFAULT_PLAYER_NICKNAME,
   WeChatPlatform,
   readRoomIdFromLaunchOptions,
+  readServerUrlFromLaunchOptions,
   type KeyValueStorage,
   type WeChatMiniGameApi,
   type WeChatSharePayload
@@ -105,6 +106,44 @@ describe('Phase 05 WeChat launch room query', () => {
 
     assert.equal(new WeChatPlatform({ wx }).getLaunchRoomId(), 'ROOM_9');
   });
+
+  it('subscribes to wx onShow launch options for share re-entry', () => {
+    const wx = new FakeWeChatApi();
+    const seenRoomIds: string[] = [];
+    const platform = new WeChatPlatform({ wx });
+
+    const stop = platform.onShowLaunchOptions((options) => {
+      const roomId = readRoomIdFromLaunchOptions(options);
+      if (roomId) {
+        seenRoomIds.push(roomId);
+      }
+    });
+
+    assert.equal(typeof stop, 'function');
+    wx.emitShow({ query: { roomId: 'ROOM_SHOW' } });
+    assert.deepEqual(seenRoomIds, ['ROOM_SHOW']);
+
+    stop?.();
+    wx.emitShow({ query: { roomId: 'ROOM_AFTER_STOP' } });
+    assert.deepEqual(seenRoomIds, ['ROOM_SHOW']);
+  });
+
+  it('returns null for onShow subscriptions outside WeChat', () => {
+    assert.equal(new WeChatPlatform({ wx: null }).onShowLaunchOptions(() => undefined), null);
+  });
+
+  it('reads valid serverUrl values from launch options for LAN playtests', () => {
+    assert.equal(
+      readServerUrlFromLaunchOptions({ query: { serverUrl: ' ws://192.168.1.50:8787 ' } }),
+      'ws://192.168.1.50:8787'
+    );
+    assert.equal(
+      readServerUrlFromLaunchOptions({ query: { serverUrl: 'wss://playtest.example.com/room' } }),
+      'wss://playtest.example.com/room'
+    );
+    assert.equal(readServerUrlFromLaunchOptions({ query: { serverUrl: 'https://example.com' } }), null);
+    assert.equal(readServerUrlFromLaunchOptions({ query: {} }), null);
+  });
 });
 
 describe('Phase 05 WeChat room share payloads', () => {
@@ -120,14 +159,28 @@ describe('Phase 05 WeChat room share payloads', () => {
     });
   });
 
+  it('can include the room server URL in share payloads for local multiplayer testing', () => {
+    const payload = new WeChatPlatform({
+      wx: null,
+      shareTitle: 'Join Room'
+    }).createShareRoomPayload('room_01', {
+      serverUrl: 'ws://192.168.1.50:8787'
+    });
+
+    assert.deepEqual(payload, {
+      title: 'Join Room',
+      query: 'roomId=room_01&serverUrl=ws%3A%2F%2F192.168.1.50%3A8787'
+    });
+  });
+
   it('registers the share callback and supports direct share calls when wx APIs exist', () => {
     const wx = new FakeWeChatApi();
     const platform = new WeChatPlatform({ wx, shareImageUrl: 'share.png' });
 
-    assert.equal(platform.registerRoomShare('ROOM42', { title: 'Play now' }), true);
+    assert.equal(platform.registerRoomShare('ROOM42', { title: 'Play now', serverUrl: 'ws://10.0.0.5:8787' }), true);
     assert.deepEqual(wx.shareFactory?.(), {
       title: 'Play now',
-      query: 'roomId=ROOM42',
+      query: 'roomId=ROOM42&serverUrl=ws%3A%2F%2F10.0.0.5%3A8787',
       imageUrl: 'share.png'
     });
 
@@ -171,6 +224,7 @@ class FakeWeChatApi implements WeChatMiniGameApi {
   public launchOptions = {};
   public shareFactory: (() => WeChatSharePayload) | null = null;
   public lastSharedPayload: WeChatSharePayload | null = null;
+  private readonly showHandlers = new Set<(options: { query?: Record<string, unknown> }) => void>();
 
   public getLaunchOptionsSync() {
     return this.launchOptions;
@@ -194,5 +248,19 @@ class FakeWeChatApi implements WeChatMiniGameApi {
 
   public shareAppMessage(payload: WeChatSharePayload): void {
     this.lastSharedPayload = payload;
+  }
+
+  public onShow(handler: (options: { query?: Record<string, unknown> }) => void): void {
+    this.showHandlers.add(handler);
+  }
+
+  public offShow(handler: (options: { query?: Record<string, unknown> }) => void): void {
+    this.showHandlers.delete(handler);
+  }
+
+  public emitShow(options: { query?: Record<string, unknown> }): void {
+    for (const handler of this.showHandlers) {
+      handler(options);
+    }
   }
 }
