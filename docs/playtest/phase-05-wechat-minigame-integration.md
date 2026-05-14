@@ -10,7 +10,16 @@ WeChat minigame adaptation for the already server-authoritative multiplayer loop
   Game project, not the Cocos project root. The prepared export has
   `compileType=game`, `setting.urlCheck=false`, `game.js`, `game.json`, and
   `assets/main/config.json`.
-- The generated settings launch `db://assets/scenes/Lobby.scene`.
+- By default, `npm run wechat:prepare-devtools` preserves the generated Cocos
+  `game.js` startup path. It only injects the LAN `roomServerUrl`, DevTools
+  helper flag, and project config fixes, then launches
+  `db://assets/scenes/Lobby.scene` through the normal Cocos application.
+- The native canvas fallback is an explicit debug-only mode for isolating
+  WeChat socket/share behavior from Cocos scene startup issues. Enable it with
+  `PROP_HIDE_SEEK_NATIVE_FALLBACK=1 npm run wechat:prepare-devtools`; do not
+  use this mode as the Phase 05 default validation path.
+- The generated settings launch `db://assets/scenes/Lobby.scene` in the default
+  Cocos path.
 - A normal launch enters Lobby without requiring a WeChat nickname permission prompt.
 - A launch query containing `roomId` is parsed and immediately auto-joins the
   room with the current player name, cached profile nickname, or default
@@ -23,6 +32,10 @@ WeChat minigame adaptation for the already server-authoritative multiplayer loop
   check.
 - Re-entering from a share card while the app is already open is handled through
   `wx.onShow` launch options.
+- In fallback debug mode, launch `roomId`/`serverUrl`, `wx.onShow` re-entry,
+  Join Room, Share, and role-aware Action dispatch are covered by mocked
+  automated tests. Manual fallback checks are optional and should not replace
+  the Cocos path checks above.
 - Local player profile is cached and reused without logging sensitive user data.
 - Left joystick touch and right action touch can be held at the same time.
 - Landscape safe area insets keep controls away from system gesture areas.
@@ -41,4 +54,10 @@ npm run typecheck
 npm run validate:phase05
 npm run wechat:prepare-devtools
 npm run smoke:existing-ws
+```
+
+Optional fallback smoke preparation:
+
+```bash
+PROP_HIDE_SEEK_NATIVE_FALLBACK=1 npm run wechat:prepare-devtools
 ```

@@ -29,23 +29,28 @@
     if (!canvas.height || canvas.height < targetHeight) {
       canvas.height = targetHeight;
     }
+
     const state = {
-      serverUrl: options?.serverUrl || globalThis.__PROP_HIDE_SEEK_ROOM_SERVER_URL__ || 'ws://127.0.0.1:8787',
+      serverUrl: normalizeServerUrl(options?.serverUrl) ||
+        normalizeServerUrl(globalThis.__PROP_HIDE_SEEK_ROOM_SERVER_URL__) ||
+        'ws://127.0.0.1:8787',
       screen: 'lobby',
       socket: null,
       connected: false,
       pending: null,
       playerName: 'Player',
+      joinRoomId: normalizeRoomId(options?.roomId) || '',
       room: null,
       playerId: '',
       gameState: null,
       error: '',
-      info: 'Native WeChat runtime',
+      info: 'Native WeChat debug fallback',
       seq: 0,
       moveX: 0,
       moveY: 0,
       buttons: []
     };
+    globalThis.__PROP_HIDE_SEEK_NATIVE_FALLBACK_STATE__ = state;
 
     function connectThen(message) {
       state.pending = message;
@@ -76,6 +81,7 @@
           return;
         }
         handleMessage(message);
+        draw();
       });
       task.onError(function (event) {
         state.connected = false;
@@ -99,6 +105,59 @@
       });
     }
 
+    function createRoom() {
+      connectThen({ type: 'create_room', playerName: getPlayerName() });
+    }
+
+    function joinRoom(roomId) {
+      const normalizedRoomId = normalizeRoomId(roomId || state.joinRoomId);
+      if (!normalizedRoomId) {
+        state.error = 'Room code is required.';
+        return;
+      }
+
+      state.joinRoomId = normalizedRoomId;
+      connectThen({
+        type: 'join_room',
+        roomId: normalizedRoomId,
+        playerName: getPlayerName()
+      });
+    }
+
+    function shareRoom() {
+      if (!state.room?.roomId) {
+        state.error = 'Create or join a room before sharing.';
+        return false;
+      }
+
+      const payload = createSharePayload(state.room.roomId);
+      if (typeof wxApi.shareAppMessage === 'function') {
+        wxApi.shareAppMessage(payload);
+        state.info = 'Share requested.';
+        return true;
+      }
+
+      state.error = 'Share is available in WeChat.';
+      return false;
+    }
+
+    function registerShare(roomId) {
+      if (!roomId || typeof wxApi.onShareAppMessage !== 'function') {
+        return;
+      }
+      wxApi.onShareAppMessage(function () {
+        return createSharePayload(roomId);
+      });
+    }
+
+    function createSharePayload(roomId) {
+      const query = `roomId=${encodeURIComponent(roomId)}&serverUrl=${encodeURIComponent(state.serverUrl)}`;
+      return {
+        title: 'Join my Prop Hide & Seek room',
+        query
+      };
+    }
+
     function handleMessage(message) {
       if (message.type === 'welcome') {
         state.playerId = message.playerId || state.playerId;
@@ -107,8 +166,10 @@
       if (message.type === 'room_joined' || message.type === 'room_updated' || message.type === 'match_starting') {
         state.room = message.room;
         state.playerId = message.playerId || state.playerId;
+        state.joinRoomId = normalizeRoomId(message.room?.roomId) || state.joinRoomId;
         state.screen = message.type === 'match_starting' ? 'game' : 'room';
         state.error = '';
+        registerShare(message.room?.roomId);
         return;
       }
       if (message.type === 'state') {
@@ -120,6 +181,26 @@
       if (message.type === 'error') {
         state.error = message.message || message.code || 'Server error';
       }
+    }
+
+    function applyLaunchOptions(launchOptions, autoJoin) {
+      const query = launchOptions?.query || {};
+      const nextServerUrl = normalizeServerUrl(query.serverUrl);
+      if (nextServerUrl) {
+        state.serverUrl = nextServerUrl;
+      }
+
+      const nextRoomId = normalizeRoomId(query.roomId);
+      if (nextRoomId) {
+        state.joinRoomId = nextRoomId;
+        state.info = `Launch room ${nextRoomId}`;
+        if (autoJoin) {
+          joinRoom(nextRoomId);
+        }
+        return true;
+      }
+
+      return Boolean(nextServerUrl);
     }
 
     function button(label, x, y, w, h, action) {
@@ -162,27 +243,29 @@
     function drawLobby(width, height) {
       title('Prop Hide & Seek', width / 2, height * 0.18, 34);
       line(`Server: ${state.serverUrl}`, width / 2, height * 0.28, '#cbd5e1', 18);
-      line(state.info, width / 2, height * 0.34, '#93c5fd', 16);
-      button('Create Room', width / 2 - 140, height * 0.44, 280, 54, function () {
-        connectThen({ type: 'create_room', playerName: state.playerName });
+      line(state.joinRoomId ? `Launch room: ${state.joinRoomId}` : state.info, width / 2, height * 0.34, '#93c5fd', 16);
+      button('Create Room', width / 2 - 300, height * 0.44, 220, 54, createRoom);
+      button('Join Room', width / 2 - 40, height * 0.44, 220, 54, function () {
+        joinRoom(state.joinRoomId);
       });
-      line('This fallback bypasses the empty Cocos scene so WeChat can run now.', width / 2, height * 0.61, '#94a3b8', 15);
+      line('Native fallback is opt-in debug mode; default DevTools runs Cocos.', width / 2, height * 0.61, '#94a3b8', 15);
     }
 
     function drawRoom(width, height) {
       const room = state.room;
-      title(`Room ${room?.roomId || ''}`, width / 2, height * 0.16, 32);
+      title(`Room ${room?.roomId || state.joinRoomId || ''}`, width / 2, height * 0.16, 32);
       const players = room?.players || [];
       players.forEach(function (player, index) {
         line(`${player.displayName || player.playerName}: ${player.ready ? 'Ready' : 'Not ready'}${player.isOwner ? ' | Owner' : ''}`, width / 2, height * 0.27 + index * 28, '#e2e8f0', 18);
       });
-      button('Ready', width / 2 - 250, height * 0.66, 150, 50, function () {
+      button('Ready', width / 2 - 330, height * 0.66, 135, 50, function () {
         send({ type: 'set_ready', ready: true });
       });
-      button('Test Player', width / 2 - 75, height * 0.66, 170, 50, addTestPlayer);
-      button('Start', width / 2 + 125, height * 0.66, 150, 50, function () {
+      button('Test Player', width / 2 - 175, height * 0.66, 160, 50, addTestPlayer);
+      button('Start', width / 2 + 5, height * 0.66, 120, 50, function () {
         send({ type: 'start_match' });
       });
+      button('Share', width / 2 + 145, height * 0.66, 130, 50, shareRoom);
     }
 
     function drawGame(width, height) {
@@ -198,7 +281,9 @@
       button('Left', width * 0.10, height * 0.78, 90, 46, function () { input(-1, 0); });
       button('Stop', width * 0.215, height * 0.78, 90, 46, function () { input(0, 0); });
       button('Right', width * 0.33, height * 0.78, 90, 46, function () { input(1, 0); });
-      button('Action', width * 0.72, height * 0.78, 130, 52, function () { input(state.moveX, state.moveY, 'attack'); });
+      button(getActionLabel(), width * 0.72, height * 0.78, 150, 52, function () {
+        input(state.moveX, state.moveY, getLocalAction());
+      });
     }
 
     function drawTokens(game, width, height) {
@@ -235,6 +320,27 @@
       send({ type: 'player_input', seq: state.seq, moveX, moveY, action });
     }
 
+    function getLocalAction() {
+      return getLocalPlayer()?.role === 'seeker' ? 'attack' : 'switch_prop';
+    }
+
+    function getActionLabel() {
+      return getLocalAction() === 'attack' ? 'Attack' : 'Switch Prop';
+    }
+
+    function getLocalPlayer() {
+      const players = state.gameState?.players || [];
+      if (state.playerId) {
+        const byId = players.find(function (player) {
+          return player.playerId === state.playerId;
+        });
+        if (byId) return byId;
+      }
+      return players.find(function (player) {
+        return player.displayName === state.playerName || player.playerName === state.playerName;
+      }) || null;
+    }
+
     function addTestPlayer() {
       if (!state.room?.roomId) {
         state.error = 'Create a room first';
@@ -253,6 +359,10 @@
       task.onError(function (event) {
         state.error = event?.errMsg || 'Test player failed';
       });
+    }
+
+    function getPlayerName() {
+      return state.playerName.trim() || 'Player';
     }
 
     function title(text, x, y, size) {
@@ -292,8 +402,31 @@
     }
 
     wxApi.onTouchEnd(handleTouch);
+    if (typeof wxApi.onShow === 'function') {
+      wxApi.onShow(function (launchOptions) {
+        applyLaunchOptions(launchOptions, true);
+        draw();
+      });
+    }
+    applyLaunchOptions(wxApi.getLaunchOptionsSync?.(), true);
     setInterval(draw, 33);
     draw();
     console.log('[PropHideSeekFallback] Native WeChat fallback started.', state.serverUrl);
   };
+
+  function normalizeRoomId(value) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    const roomId = String(value).trim().toUpperCase();
+    return /^[A-Z0-9_-]{1,32}$/.test(roomId) ? roomId : null;
+  }
+
+  function normalizeServerUrl(value) {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const url = value.trim();
+    return /^wss?:\/\/[^\s]+$/i.test(url) ? url : null;
+  }
 })();
