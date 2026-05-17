@@ -1022,6 +1022,9 @@ function renderKitchenForeground(parent: Node, mapState: LoadedMapState): void {
   for (const obstacle of mapState.obstacles) {
     addKitchenStandingFixtureForegroundWorld(parent, obstacle);
   }
+  for (const occluder of mapState.occluders) {
+    addKitchenOccluderWorld(parent, occluder);
+  }
 }
 
 function attachKitchenForegroundLayer(
@@ -1333,6 +1336,66 @@ function addKitchenPantryForegroundWorld(parent: Node, x: number, y: number, wid
 
 function addKitchenCrateShelfForegroundWorld(parent: Node, x: number, y: number, width: number, height: number): void {
   addKitchenCrateShelfPerspectiveWorld(parent, 'KitchenCrateShelfForeground', x, y, width, height, false);
+}
+
+function addKitchenOccluderWorld(parent: Node, volume: LoadedMapVolumeState): void {
+  const x = volume.position.x;
+  const y = volume.position.y;
+  const width = volume.size.width;
+  const height = volume.size.height;
+  if (volume.id === 'occluder_table_front_edge') {
+    addKitchenTableFrontEdgeWorld(parent, x, y, width, height);
+  } else if (volume.id === 'occluder_island_front_edge' || volume.id === 'occluder_right_counter_foreground') {
+    addKitchenCounterFrontEdgeWorld(parent, volume.id, x, y, width, height);
+  } else if (volume.id === 'occluder_upper_left_pillar') {
+    addKitchenPillarOccluderWorld(parent, x, y, width, height);
+  } else if (volume.id === 'occluder_tall_plant_corner') {
+    addKitchenPlantOccluderWorld(parent, x, y, width, height);
+  } else if (volume.id === 'occluder_crate_stack_front') {
+    addKitchenCrateFrontOccluderWorld(parent, x, y, width, height);
+  } else {
+    addWorldRect(parent, volume, new Color(71, 85, 105, 210));
+  }
+}
+
+function addKitchenTableFrontEdgeWorld(parent: Node, x: number, y: number, width: number, height: number): void {
+  addWorldPanel(parent, 'KitchenTableFrontOccluderShadow', x + width / 2, y + height * 0.72, width * 0.94, height * 0.34, new Color(15, 23, 42, 62));
+  addWorldPanel(parent, 'KitchenTableFrontOccluderLip', x + width / 2, y + height * 0.46, width, height * 0.54, new Color(105, 59, 29, 245));
+  addWorldPanel(parent, 'KitchenTableFrontOccluderTrim', x + width / 2, y + height * 0.20, width * 0.88, height * 0.18, new Color(194, 122, 52, 245));
+}
+
+function addKitchenCounterFrontEdgeWorld(parent: Node, id: string, x: number, y: number, width: number, height: number): void {
+  const prefix = id.replace(/[^a-z0-9_]/gi, '_');
+  addWorldPanel(parent, `${prefix}Shadow`, x + width / 2, y + height * 0.72, width * 0.96, height * 0.34, new Color(15, 23, 42, 58));
+  addWorldPanel(parent, `${prefix}CounterFace`, x + width / 2, y + height * 0.50, width, height * 0.62, new Color(120, 73, 28, 245));
+  addWorldPanel(parent, `${prefix}CounterTop`, x + width / 2, y + height * 0.18, width * 0.92, height * 0.22, new Color(231, 229, 228, 245));
+}
+
+function addKitchenPillarOccluderWorld(parent: Node, x: number, y: number, width: number, height: number): void {
+  addWorldPanel(parent, 'KitchenPillarOccluderShadow', x + width / 2, y + height * 0.88, width * 0.72, height * 0.12, new Color(15, 23, 42, 70));
+  addWorldPanel(parent, 'KitchenPillarOccluderShaft', x + width / 2, y + height * 0.48, width * 0.50, height * 0.72, new Color(148, 163, 184, 245));
+  addWorldPanel(parent, 'KitchenPillarOccluderHighlight', x + width * 0.40, y + height * 0.48, width * 0.08, height * 0.66, new Color(226, 232, 240, 210));
+  addWorldCircle(parent, 'KitchenPillarOccluderBase', x + width / 2, y + height * 0.84, width * 0.32, new Color(100, 116, 139, 245));
+  addWorldCircle(parent, 'KitchenPillarOccluderCap', x + width / 2, y + height * 0.13, width * 0.28, new Color(203, 213, 225, 245));
+}
+
+function addKitchenPlantOccluderWorld(parent: Node, x: number, y: number, width: number, height: number): void {
+  addWorldCircle(parent, 'KitchenTallPlantShadow', x + width * 0.52, y + height * 0.86, width * 0.34, new Color(15, 23, 42, 62));
+  addWorldPanel(parent, 'KitchenTallPlantPot', x + width * 0.52, y + height * 0.78, width * 0.38, height * 0.22, new Color(146, 64, 14, 245));
+  addWorldCircle(parent, 'KitchenTallPlantLeafTop', x + width * 0.48, y + height * 0.30, width * 0.28, new Color(21, 128, 61, 230));
+  addWorldCircle(parent, 'KitchenTallPlantLeafLeft', x + width * 0.34, y + height * 0.43, width * 0.25, new Color(22, 101, 52, 230));
+  addWorldCircle(parent, 'KitchenTallPlantLeafRight', x + width * 0.64, y + height * 0.45, width * 0.25, new Color(34, 197, 94, 220));
+  addWorldCircle(parent, 'KitchenTallPlantLeafFront', x + width * 0.50, y + height * 0.56, width * 0.24, new Color(20, 83, 45, 230));
+}
+
+function addKitchenCrateFrontOccluderWorld(parent: Node, x: number, y: number, width: number, height: number): void {
+  addWorldPanel(parent, 'KitchenCrateFrontShadow', x + width / 2, y + height * 0.78, width * 0.96, height * 0.30, new Color(15, 23, 42, 54));
+  const crateWidth = width / 4;
+  for (let index = 0; index < 4; index += 1) {
+    const crateX = x + crateWidth * (index + 0.5);
+    addWorldPanel(parent, `KitchenCrateFront_${index}`, crateX, y + height * 0.52, crateWidth * 0.82, height * 0.72, new Color(154, 86, 28, 235));
+    addWorldPanel(parent, `KitchenCrateFrontBrace_${index}`, crateX, y + height * 0.52, crateWidth * 0.12, height * 0.72, new Color(92, 51, 23, 235));
+  }
 }
 
 function addKitchenTableWorld(parent: Node, x: number, y: number, width: number, height: number): void {

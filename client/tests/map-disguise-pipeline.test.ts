@@ -45,7 +45,12 @@ describe('Phase 02 kitchen map disguise pipeline', () => {
     assert.deepEqual(mapState.disguiseProps, EXPECTED_POOL);
     assert.ok(mapState.occluders.every((occluder) => occluder.layer === 'object_front'));
     assert.ok(mapState.obstacles.every((obstacle) => obstacle.blocksMovement && !obstacle.allowsOverlap));
-    assert.ok(mapState.occluders.every((occluder) => occluder.allowsOverlap && !occluder.blocksMovement));
+    assert.deepEqual(
+      mapState.occluders.filter((occluder) => occluder.blocksMovement).map((occluder) => occluder.id).sort(),
+      ['occluder_tall_plant_corner', 'occluder_upper_left_pillar']
+    );
+    assert.ok(mapState.occluders.filter((occluder) => !occluder.blocksMovement).every((occluder) => occluder.allowsOverlap));
+    assert.ok(mapState.occluders.filter((occluder) => occluder.blocksMovement).every((occluder) => !occluder.allowsOverlap));
     assert.equal(
       (MAP_CONFIG.obstacles ?? []).some(
         (obstacle) =>
@@ -76,11 +81,23 @@ describe('Phase 02 kitchen map disguise pipeline', () => {
     ]);
     const visualFridge = mapState.obstacles.find((obstacle) => obstacle.id === 'obstacle_fridge');
     const collisionFridge = pieces.obstacles.find((obstacle) => obstacle.id === 'obstacle_fridge');
+    const visualPillar = mapState.occluders.find((occluder) => occluder.id === 'occluder_upper_left_pillar');
+    const collisionPillar = pieces.obstacles.find((obstacle) => obstacle.id === 'occluder_upper_left_pillar');
+    const visualPlant = mapState.occluders.find((occluder) => occluder.id === 'occluder_tall_plant_corner');
+    const collisionPlant = pieces.obstacles.find((obstacle) => obstacle.id === 'occluder_tall_plant_corner');
 
     assert.ok(visualFridge);
     assert.ok(collisionFridge);
     assert.ok(collisionFridge.position.y > visualFridge.position.y);
     assert.ok(collisionFridge.size.height < visualFridge.size.height / 2);
+    assert.ok(visualPillar);
+    assert.ok(collisionPillar);
+    assert.ok(collisionPillar.position.y > visualPillar.position.y + visualPillar.size.height / 2);
+    assert.ok(collisionPillar.size.height < visualPillar.size.height / 4);
+    assert.ok(visualPlant);
+    assert.ok(collisionPlant);
+    assert.ok(collisionPlant.position.y > visualPlant.position.y);
+    assert.ok(collisionPlant.size.width < visualPlant.size.width / 2);
     assert.deepEqual(pieces.movementBounds, { minX: 80, minY: 80, maxX: 1360, maxY: 730 });
   });
 
@@ -193,7 +210,7 @@ describe('Phase 02 kitchen map disguise pipeline', () => {
 
     assert.deepEqual(setup.availablePropIds, EXPECTED_POOL);
     assert.equal(setup.props.length, 35);
-    assert.equal(setup.obstacles?.length, mapState.obstacles.length);
+    assert.equal(setup.obstacles?.length, mapState.obstacles.length + mapState.occluders.filter((occluder) => occluder.blocksMovement).length);
     assert.deepEqual(setup.players[0]?.startPosition, mapState.seekerSpawnPoint?.position);
     assert.deepEqual(setup.players[1]?.startPosition, mapState.spawnPoints[0]?.position);
 

@@ -84,6 +84,7 @@
       cat_siamese: 'cats/cat_siamese.png'
     };
     const catSkins = Object.keys(catSpritePaths);
+    const catAnimationSkin = 'cat_orange_tabby';
     const catAnimationFrames = [
       'idle', 'walk_1', 'walk_2',
       'front_idle', 'front_walk_1', 'front_walk_2',
@@ -98,7 +99,7 @@
       'diag_back_attack_1', 'diag_back_attack_2',
       'attack_1', 'attack_2', 'reveal', 'dizzy'
     ];
-    const catAnimationSpritePaths = createCatAnimationSpritePaths(catSkins, catAnimationFrames);
+    const catAnimationSpritePaths = createCatAnimationSpritePaths([catAnimationSkin], catAnimationFrames);
     const fallbackGameRulesConfig = {
       previewDurationMs: 5000,
       hideDurationMs: 12000,
@@ -911,6 +912,9 @@
     }
 
     function drawKitchenObstacleFixture(id, x, y, w, h) {
+      if (id.includes('pillar_base') || id.includes('plant_corner_base')) {
+        return true;
+      }
       if (id.includes('center_table')) {
         drawKitchenTableObstacle(x, y, w, h);
         return true;
@@ -1236,6 +1240,16 @@
           wh(obstacle.height)
         );
       }
+
+      for (const occluder of soloOccluders) {
+        drawKitchenOccluder(
+          occluder.id,
+          wx(occluder.x),
+          wy(occluder.y),
+          ww(occluder.width),
+          wh(occluder.height)
+        );
+      }
     }
 
     function isKitchenStandingFixture(id) {
@@ -1367,6 +1381,101 @@
         { x: x + w * 0.66, y: y + h * 0.54 },
         { x: x + w * 0.48, y: y + h * 0.56 }
       ], '#b45309', '#451a03');
+    }
+
+    function drawKitchenOccluder(id, x, y, w, h) {
+      if (id === 'occluder_table_front_edge') {
+        drawKitchenTableFrontOccluder(x, y, w, h);
+      } else if (id === 'occluder_island_front_edge' || id === 'occluder_right_counter_foreground') {
+        drawKitchenCounterFrontOccluder(id, x, y, w, h);
+      } else if (id === 'occluder_upper_left_pillar') {
+        drawKitchenPillarOccluder(x, y, w, h);
+      } else if (id === 'occluder_tall_plant_corner') {
+        drawKitchenTallPlantOccluder(x, y, w, h);
+      } else if (id === 'occluder_crate_stack_front') {
+        drawKitchenCrateStackFrontOccluder(x, y, w, h);
+      }
+    }
+
+    function drawKitchenTableFrontOccluder(x, y, w, h) {
+      drawSoftShadow(x + w / 2, y + h * 0.72, w * 0.94, h * 0.46, 0.18);
+      fillKitchenQuad([
+        { x: x + w * 0.02, y: y + h * 0.18 },
+        { x: x + w * 0.98, y: y + h * 0.18 },
+        { x: x + w * 0.88, y: y + h * 0.74 },
+        { x: x + w * 0.12, y: y + h * 0.74 }
+      ], '#6f3f1e', '#4b2a17');
+      ctx.fillStyle = '#c27a34';
+      ctx.fillRect(x + w * 0.08, y + h * 0.10, w * 0.84, Math.max(2, h * 0.18));
+      ctx.fillStyle = '#e2a761';
+      ctx.fillRect(x + w * 0.16, y + h * 0.14, w * 0.68, Math.max(1, h * 0.07));
+    }
+
+    function drawKitchenCounterFrontOccluder(id, x, y, w, h) {
+      const isStoneTop = id === 'occluder_right_counter_foreground';
+      drawSoftShadow(x + w / 2, y + h * 0.76, w * 0.96, h * 0.42, 0.17);
+      ctx.fillStyle = '#854d0e';
+      ctx.fillRect(x + w * 0.06, y + h * 0.32, w * 0.88, h * 0.58);
+      ctx.fillStyle = '#a16207';
+      ctx.fillRect(x + w * 0.12, y + h * 0.48, w * 0.76, h * 0.36);
+      ctx.fillStyle = isStoneTop ? '#e7e5e4' : '#c27a34';
+      fillKitchenQuad([
+        { x: x + w * 0.02, y: y + h * 0.12 },
+        { x: x + w * 0.98, y: y + h * 0.12 },
+        { x: x + w * 0.90, y: y + h * 0.36 },
+        { x: x + w * 0.10, y: y + h * 0.36 }
+      ], isStoneTop ? '#e7e5e4' : '#c27a34', '#334155');
+      ctx.fillStyle = isStoneTop ? '#f8fafc' : '#e2a761';
+      ctx.fillRect(x + w * 0.12, y + h * 0.17, w * 0.66, Math.max(1, h * 0.06));
+    }
+
+    function drawKitchenPillarOccluder(x, y, w, h) {
+      drawSoftShadow(x + w / 2, y + h * 0.88, w * 0.72, h * 0.20, 0.20);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(x + w * 0.25, y + h * 0.18, w * 0.50, h * 0.68);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(x + w * 0.34, y + h * 0.20, w * 0.09, h * 0.62);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(x + w * 0.12, y + h * 0.78, w * 0.76, h * 0.14);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(x + w * 0.16, y + h * 0.08, w * 0.68, h * 0.14);
+    }
+
+    function drawKitchenTallPlantOccluder(x, y, w, h) {
+      drawSoftShadow(x + w * 0.52, y + h * 0.86, w * 0.68, h * 0.20, 0.17);
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(x + w * 0.33, y + h * 0.69, w * 0.38, h * 0.20);
+      ctx.fillStyle = '#9a3412';
+      ctx.fillRect(x + w * 0.38, y + h * 0.63, w * 0.28, h * 0.10);
+      drawKitchenLeaf(x + w * 0.48, y + h * 0.30, w * 0.30, h * 0.20, '#15803d');
+      drawKitchenLeaf(x + w * 0.34, y + h * 0.44, w * 0.28, h * 0.18, '#166534');
+      drawKitchenLeaf(x + w * 0.64, y + h * 0.46, w * 0.28, h * 0.18, '#22c55e');
+      drawKitchenLeaf(x + w * 0.50, y + h * 0.57, w * 0.30, h * 0.18, '#14532d');
+    }
+
+    function drawKitchenLeaf(centerX, centerY, w, h, fillStyle) {
+      if (typeof ctx.ellipse !== 'function') {
+        ctx.fillStyle = fillStyle;
+        ctx.fillRect(centerX - w / 2, centerY - h / 2, w, h);
+        return;
+      }
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, w / 2, h / 2, -0.35, 0, Math.PI * 2);
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+    }
+
+    function drawKitchenCrateStackFrontOccluder(x, y, w, h) {
+      drawSoftShadow(x + w / 2, y + h * 0.80, w * 0.96, h * 0.40, 0.16);
+      const crateW = w / 4;
+      for (let index = 0; index < 4; index += 1) {
+        const crateX = x + crateW * index + crateW * 0.10;
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(crateX, y + h * 0.22, crateW * 0.82, h * 0.62);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(crateX + crateW * 0.08, y + h * 0.47, crateW * 0.66, Math.max(2, h * 0.08));
+        ctx.fillRect(crateX + crateW * 0.36, y + h * 0.28, Math.max(2, crateW * 0.08), h * 0.48);
+      }
     }
 
     function drawSoloProp(mapX, mapY, mapW, mapH, kind, x, y, scale, selected, destroyed, radius) {
@@ -1745,14 +1854,16 @@
       { id: 'obstacle_pantry', x: 1300, y: 120, width: 58, height: 98 },
       { id: 'obstacle_center_table', x: 655, y: 410, width: 138, height: 66 },
       { id: 'obstacle_crate_shelf', x: 152, y: 610, width: 48, height: 60 },
+      { id: 'obstacle_upper_left_pillar_base', x: 459, y: 247, width: 38, height: 24 },
+      { id: 'obstacle_tall_plant_corner_base', x: 1352, y: 705, width: 30, height: 24 },
     ];
     const soloOccluders = [
-      { id: 'occluder_table_front_edge', x: 612, y: 479, width: 257, height: 43 },
-      { id: 'occluder_island_front_edge', x: 772, y: 520, width: 230, height: 47 },
-      { id: 'occluder_upper_left_pillar', x: 446, y: 140, width: 63, height: 149 },
-      { id: 'occluder_right_counter_foreground', x: 1179, y: 329, width: 257, height: 50 },
-      { id: 'occluder_tall_plant_corner', x: 1325, y: 650, width: 86, height: 133 },
-      { id: 'occluder_crate_stack_front', x: 281, y: 736, width: 293, height: 54 },
+      { id: 'occluder_table_front_edge', x: 612, y: 479, width: 257, height: 43, blocksMovement: false, allowsOverlap: true },
+      { id: 'occluder_island_front_edge', x: 772, y: 520, width: 230, height: 47, blocksMovement: false, allowsOverlap: true },
+      { id: 'occluder_upper_left_pillar', x: 446, y: 140, width: 63, height: 149, blocksMovement: true, allowsOverlap: false },
+      { id: 'occluder_right_counter_foreground', x: 1179, y: 329, width: 257, height: 50, blocksMovement: false, allowsOverlap: true },
+      { id: 'occluder_tall_plant_corner', x: 1325, y: 650, width: 86, height: 133, blocksMovement: true, allowsOverlap: false },
+      { id: 'occluder_crate_stack_front', x: 281, y: 736, width: 293, height: 54, blocksMovement: false, allowsOverlap: true },
     ];
     const soloSeekerPatrolPoints = [
       { x: 1170, y: 225 },

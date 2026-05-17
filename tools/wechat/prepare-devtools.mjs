@@ -1,5 +1,5 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative, resolve, sep } from 'node:path';
 import { networkInterfaces } from 'node:os';
 
 const root = process.cwd();
@@ -13,13 +13,18 @@ const fallbackRuntimePath = join(wechatGameRoot, 'prop-hide-seek-fallback.js');
 const resourcesImportRoot = join(wechatGameRoot, 'assets', 'resources', 'import');
 const kitchenMapConfigPath = join(root, 'client', 'assets', 'resources', 'configs', 'map_kitchen_01.json');
 const kenneyPropsSourceRoot = join(root, 'client', 'assets', 'art', 'kenney', 'props');
-const kenneyPropsRuntimeRoot = join(wechatGameRoot, 'kenney', 'props');
+const kenneyRuntimeRoot = join(wechatGameRoot, 'kenney');
+const kenneyPropsRuntimeRoot = join(kenneyRuntimeRoot, 'props');
 const catSpritesSourceRoot = join(root, 'client', 'assets', 'resources', 'art', 'characters', 'cats');
-const catSpritesRuntimeRoot = join(wechatGameRoot, 'cats');
+const catRuntimeRoot = join(wechatGameRoot, 'cats');
+const catSpritesRuntimeRoot = catRuntimeRoot;
 const catAnimationSourceRoot = join(root, 'client', 'assets', 'resources', 'art', 'characters', 'cat_animations');
-const catAnimationRuntimeRoot = join(wechatGameRoot, 'cats', 'anim');
+const catAnimationRuntimeRoot = join(catRuntimeRoot, 'anim');
 const generatedPropsSourceRoot = join(root, 'client', 'assets', 'resources', 'art', 'props', 'generated', 'kitchen_v2');
-const generatedPropsRuntimeRoot = join(wechatGameRoot, 'generated', 'props');
+const generatedRuntimeRoot = join(wechatGameRoot, 'generated');
+const generatedPropsRuntimeRoot = join(generatedRuntimeRoot, 'props');
+const fallbackRuntimeAssetRoots = [kenneyRuntimeRoot, catRuntimeRoot, generatedRuntimeRoot];
+const wechatPackageBudgetBytes = readByteBudget('PROP_HIDE_SEEK_WECHAT_PACKAGE_BUDGET_BYTES', 8 * 1024 * 1024);
 const requiredKenneyRuntimeAssets = [
   'prop_wooden_crate.png',
   'prop_trash_bin.png',
@@ -38,6 +43,7 @@ const requiredCatRuntimeAssets = [
   'cat_black.png',
   'cat_siamese.png'
 ];
+const requiredCatAnimationSkin = 'cat_orange_tabby';
 const requiredCatAnimationFrames = [
   'idle',
   'walk_1',
@@ -104,11 +110,14 @@ config.condition = normalizeConditions(config.condition);
 
 writeFileSync(projectConfigPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
 writePrivateDevtoolsConfig();
+cleanFallbackRuntimeAssets();
 copyFileSync(fallbackSourcePath, fallbackRuntimePath);
-copyKenneyRuntimeAssets();
-copyCatRuntimeAssets();
-copyCatAnimationRuntimeAssets();
-copyGeneratedPropRuntimeAssets();
+if (nativeFallbackEnabled) {
+  copyKenneyRuntimeAssets();
+  copyCatRuntimeAssets();
+  copyCatAnimationRuntimeAssets();
+  copyGeneratedPropRuntimeAssets();
+}
 syncRuntimeJsonAssets();
 if (nativeFallbackEnabled) {
   writeNativeFallbackGameJs();
@@ -121,47 +130,7 @@ const requiredRuntimeFiles = [
   'game.json',
   'prop-hide-seek-fallback.js',
   'project.config.json',
-  join('kenney', 'props', 'prop_wooden_crate.png'),
-  join('kenney', 'props', 'prop_trash_bin.png'),
-  join('kenney', 'props', 'prop_plant_pot.png'),
-  join('kenney', 'props', 'prop_chair.png'),
-  join('kenney', 'props', 'prop_water_bucket.png'),
-  join('kenney', 'props', 'prop_food_basket.png'),
-  join('kenney', 'props', 'map_stove.png'),
-  join('kenney', 'props', 'map_sink.png'),
-  join('kenney', 'props', 'map_counter.png'),
-  join('cats', 'cat_orange_tabby.png'),
-  join('cats', 'cat_gray_tuxedo.png'),
-  join('cats', 'cat_calico.png'),
-  join('cats', 'cat_black.png'),
-  join('cats', 'cat_siamese.png'),
-  join('cats', 'anim', 'cat_orange_tabby_idle.png'),
-  join('cats', 'anim', 'cat_orange_tabby_walk_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_front_walk_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_back_walk_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_diag_front_walk_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_diag_back_walk_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_side_crouch.png'),
-  join('cats', 'anim', 'cat_orange_tabby_front_crouch.png'),
-  join('cats', 'anim', 'cat_orange_tabby_back_crouch.png'),
-  join('cats', 'anim', 'cat_orange_tabby_diag_front_crouch.png'),
-  join('cats', 'anim', 'cat_orange_tabby_diag_back_crouch.png'),
-  join('cats', 'anim', 'cat_orange_tabby_side_attack_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_front_attack_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_back_attack_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_diag_front_attack_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_diag_back_attack_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_attack_1.png'),
-  join('cats', 'anim', 'cat_orange_tabby_dizzy.png'),
-  join('generated', 'props', 'prop_wooden_crate.png'),
-  join('generated', 'props', 'prop_trash_bin.png'),
-  join('generated', 'props', 'prop_plant_pot.png'),
-  join('generated', 'props', 'prop_chair.png'),
-  join('generated', 'props', 'prop_water_bucket.png'),
-  join('generated', 'props', 'prop_food_basket.png'),
-  join('generated', 'props', 'map_stove.png'),
-  join('generated', 'props', 'map_sink.png'),
-  join('generated', 'props', 'map_counter.png'),
+  ...(nativeFallbackEnabled ? getNativeFallbackRequiredRuntimeFiles() : []),
   join('assets', 'main', 'index.js'),
   join('assets', 'main', 'config.json')
 ];
@@ -171,6 +140,9 @@ if (missing.length > 0) {
 }
 
 verifyRuntimeConfig();
+verifyFallbackRuntimeAssetSet();
+const packageSummary = summarizeWechatGamePackage();
+warnPackageBudgets(packageSummary);
 
 console.log('WeChat DevTools project prepared for game compilation.');
 console.log(`Project: ${wechatGameRoot}`);
@@ -179,53 +151,57 @@ console.log('setting.urlCheck=false');
 console.log('launchScene=db://assets/scenes/Lobby.scene');
 console.log(`nativeFallback=${nativeFallbackEnabled ? 'enabled' : 'disabled'}`);
 console.log(`roomServerUrl=${roomServerUrl}`);
+printPackageSummary(packageSummary);
 
-function copyKenneyRuntimeAssets() {
-  mkdirSync(kenneyPropsRuntimeRoot, { recursive: true });
-  for (const fileName of requiredKenneyRuntimeAssets) {
-    const sourcePath = join(kenneyPropsSourceRoot, fileName);
-    if (!existsSync(sourcePath)) {
-      fail(`Missing selected Kenney runtime asset: ${sourcePath}`);
-    }
-    copyFileSync(sourcePath, join(kenneyPropsRuntimeRoot, fileName));
+function cleanFallbackRuntimeAssets() {
+  for (const runtimeRoot of fallbackRuntimeAssetRoots) {
+    assertInsideWechatGame(runtimeRoot);
+    rmSync(runtimeRoot, { recursive: true, force: true });
   }
 }
 
+function copyKenneyRuntimeAssets() {
+  copySelectedRuntimeAssets(kenneyPropsSourceRoot, kenneyPropsRuntimeRoot, requiredKenneyRuntimeAssets, 'selected Kenney runtime asset');
+}
+
 function copyCatRuntimeAssets() {
-  mkdirSync(catSpritesRuntimeRoot, { recursive: true });
-  for (const fileName of requiredCatRuntimeAssets) {
-    const sourcePath = join(catSpritesSourceRoot, fileName);
-    if (!existsSync(sourcePath)) {
-      fail(`Missing selected cat runtime asset: ${sourcePath}`);
-    }
-    copyFileSync(sourcePath, join(catSpritesRuntimeRoot, fileName));
-  }
+  copySelectedRuntimeAssets(catSpritesSourceRoot, catSpritesRuntimeRoot, requiredCatRuntimeAssets, 'selected cat runtime asset');
 }
 
 function copyCatAnimationRuntimeAssets() {
   mkdirSync(catAnimationRuntimeRoot, { recursive: true });
-  for (const catFileName of requiredCatRuntimeAssets) {
-    const skin = catFileName.replace(/\.png$/, '');
-    for (const frame of requiredCatAnimationFrames) {
-      const fileName = `${skin}_${frame}.png`;
-      const sourcePath = join(catAnimationSourceRoot, fileName);
-      if (!existsSync(sourcePath)) {
-        fail(`Missing selected cat animation runtime asset: ${sourcePath}`);
-      }
-      copyFileSync(sourcePath, join(catAnimationRuntimeRoot, fileName));
+  for (const frame of requiredCatAnimationFrames) {
+    const fileName = `${requiredCatAnimationSkin}_${frame}.png`;
+    const sourcePath = join(catAnimationSourceRoot, fileName);
+    if (!existsSync(sourcePath)) {
+      fail(`Missing selected cat animation runtime asset: ${sourcePath}`);
     }
+    copyFileSync(sourcePath, join(catAnimationRuntimeRoot, fileName));
   }
 }
 
 function copyGeneratedPropRuntimeAssets() {
-  mkdirSync(generatedPropsRuntimeRoot, { recursive: true });
-  for (const fileName of requiredGeneratedPropRuntimeAssets) {
-    const sourcePath = join(generatedPropsSourceRoot, fileName);
+  copySelectedRuntimeAssets(generatedPropsSourceRoot, generatedPropsRuntimeRoot, requiredGeneratedPropRuntimeAssets, 'generated prop runtime asset');
+}
+
+function copySelectedRuntimeAssets(sourceRoot, runtimeRoot, fileNames, label) {
+  mkdirSync(runtimeRoot, { recursive: true });
+  for (const fileName of fileNames) {
+    const sourcePath = join(sourceRoot, fileName);
     if (!existsSync(sourcePath)) {
-      fail(`Missing generated prop runtime asset: ${sourcePath}`);
+      fail(`Missing ${label}: ${sourcePath}`);
     }
-    copyFileSync(sourcePath, join(generatedPropsRuntimeRoot, fileName));
+    copyFileSync(sourcePath, join(runtimeRoot, fileName));
   }
+}
+
+function getNativeFallbackRequiredRuntimeFiles() {
+  return [
+    ...requiredKenneyRuntimeAssets.map((fileName) => join('kenney', 'props', fileName)),
+    ...requiredCatRuntimeAssets.map((fileName) => join('cats', fileName)),
+    ...requiredCatAnimationFrames.map((frame) => join('cats', 'anim', `${requiredCatAnimationSkin}_${frame}.png`)),
+    ...requiredGeneratedPropRuntimeAssets.map((fileName) => join('generated', 'props', fileName))
+  ];
 }
 
 function syncRuntimeJsonAssets() {
@@ -311,8 +287,11 @@ function findRuntimeJsonAssetPayload(value, assetName) {
   return null;
 }
 
-function listFiles(rootPath, extension) {
+function listFiles(rootPath, extension = '') {
   const results = [];
+  if (!existsSync(rootPath)) {
+    return results;
+  }
   const entries = readdirSync(rootPath, { withFileTypes: true });
   for (const entry of entries) {
     const path = join(rootPath, entry.name);
@@ -323,6 +302,107 @@ function listFiles(rootPath, extension) {
     }
   }
   return results;
+}
+
+function verifyFallbackRuntimeAssetSet() {
+  const expected = new Set(
+    (nativeFallbackEnabled ? getNativeFallbackRequiredRuntimeFiles() : [])
+      .map(normalizeRuntimePath)
+  );
+  const actual = getFallbackRuntimeAssetFiles().map((path) => normalizeRuntimePath(relative(wechatGameRoot, path)));
+  const unexpected = actual.filter((path) => !expected.has(path));
+  if (unexpected.length > 0) {
+    fail(`Unexpected native fallback runtime assets in WeChat output:\n${unexpected.map((path) => `- ${path}`).join('\n')}`);
+  }
+}
+
+function getFallbackRuntimeAssetFiles() {
+  return fallbackRuntimeAssetRoots.flatMap((runtimeRoot) => listFiles(runtimeRoot));
+}
+
+function summarizeWechatGamePackage() {
+  return {
+    total: summarizePath(wechatGameRoot),
+    cocosAssets: summarizePath(join(wechatGameRoot, 'assets')),
+    nativeFallbackScript: summarizePath(fallbackRuntimePath),
+    nativeFallbackAssets: summarizePaths(fallbackRuntimeAssetRoots)
+  };
+}
+
+function summarizePaths(paths) {
+  return paths.reduce(
+    (summary, path) => {
+      const next = summarizePath(path);
+      summary.files += next.files;
+      summary.bytes += next.bytes;
+      return summary;
+    },
+    { files: 0, bytes: 0 }
+  );
+}
+
+function summarizePath(path) {
+  if (!existsSync(path)) {
+    return { files: 0, bytes: 0 };
+  }
+
+  const stat = statSync(path);
+  if (stat.isFile()) {
+    return { files: 1, bytes: stat.size };
+  }
+  if (!stat.isDirectory()) {
+    return { files: 0, bytes: 0 };
+  }
+
+  let files = 0;
+  let bytes = 0;
+  for (const filePath of listFiles(path)) {
+    const fileStat = statSync(filePath);
+    files += 1;
+    bytes += fileStat.size;
+  }
+  return { files, bytes };
+}
+
+function warnPackageBudgets(summary) {
+  if (summary.total.bytes > wechatPackageBudgetBytes) {
+    console.warn(`WARNING packageSize over budget: ${formatBytes(summary.total.bytes)} > ${formatBytes(wechatPackageBudgetBytes)}.`);
+  }
+}
+
+function printPackageSummary(summary) {
+  console.log(`packageSize=${formatBytes(summary.total.bytes)} (${summary.total.files} files, budget ${formatBytes(wechatPackageBudgetBytes)})`);
+  console.log(`cocosAssetsSize=${formatBytes(summary.cocosAssets.bytes)} (${summary.cocosAssets.files} files)`);
+  console.log(`nativeFallbackScriptSize=${formatBytes(summary.nativeFallbackScript.bytes)} (${summary.nativeFallbackScript.files} file)`);
+  console.log(`nativeFallbackCopiedAssetSize=${formatBytes(summary.nativeFallbackAssets.bytes)} (${summary.nativeFallbackAssets.files} files)`);
+}
+
+function normalizeRuntimePath(path) {
+  return path.split(sep).join('/');
+}
+
+function assertInsideWechatGame(path) {
+  const rootPath = resolve(wechatGameRoot);
+  const targetPath = resolve(path);
+  if (!targetPath.startsWith(`${rootPath}${sep}`)) {
+    fail(`Refusing to mutate path outside WeChat output: ${path}`);
+  }
+}
+
+function readByteBudget(envName, fallbackBytes) {
+  const raw = process.env[envName];
+  if (!raw) {
+    return fallbackBytes;
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    fail(`${envName} must be a positive byte count.`);
+  }
+  return Math.floor(parsed);
+}
+
+function formatBytes(bytes) {
+  return `${bytes} bytes / ${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
 }
 
 function normalizeConditions(condition) {

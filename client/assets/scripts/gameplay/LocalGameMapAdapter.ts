@@ -102,19 +102,35 @@ function toLocalCollisionRect(volume: LoadedMapVolumeState): LocalCollisionRect 
 }
 
 function toMovementCollisionVolume(volume: LoadedMapVolumeState): LoadedMapVolumeState {
+  if (volume.id === 'occluder_upper_left_pillar') {
+    return toRelativeCollisionVolume(volume, 0.21, 0.72, 0.60, 0.16);
+  }
+  if (volume.id === 'occluder_tall_plant_corner') {
+    return toRelativeCollisionVolume(volume, 0.31, 0.41, 0.35, 0.18);
+  }
   if (!isStandingFixtureVolume(volume.id)) {
     return volume;
   }
 
+  return toRelativeCollisionVolume(volume, 0.18, 0.72, 0.64, 0.24);
+}
+
+function toRelativeCollisionVolume(
+  volume: LoadedMapVolumeState,
+  offsetX: number,
+  offsetY: number,
+  widthScale: number,
+  heightScale: number
+): LoadedMapVolumeState {
   return {
     ...volume,
     position: {
-      x: volume.position.x + volume.size.width * 0.18,
-      y: volume.position.y + volume.size.height * 0.72
+      x: volume.position.x + volume.size.width * offsetX,
+      y: volume.position.y + volume.size.height * offsetY
     },
     size: {
-      width: volume.size.width * 0.64,
-      height: volume.size.height * 0.24
+      width: volume.size.width * widthScale,
+      height: volume.size.height * heightScale
     }
   };
 }

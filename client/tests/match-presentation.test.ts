@@ -96,6 +96,10 @@ describe('shared match presentation for solo and online clients', () => {
     assert.ok(appScript.includes('function addKitchenPantryWorld('));
     assert.ok(appScript.includes('function addKitchenCrateShelfWorld('));
     assert.ok(appScript.includes('function addWorldQuad('));
+    assert.ok(appScript.includes('for (const occluder of mapState.occluders)'));
+    assert.ok(appScript.includes('function addKitchenOccluderWorld('));
+    assert.ok(appScript.includes('KitchenPillarOccluderBase'));
+    assert.ok(appScript.includes('KitchenTallPlantPot'));
     assert.ok(appScript.includes('function getKitchenStandingFixtureVisualRect('));
     assert.ok(appScript.includes('return { width: 2.35, height: 2.05 };'));
     assert.ok(appScript.includes("addWorldPanel(parent, 'KitchenTableTop'"));

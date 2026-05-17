@@ -13,4 +13,5 @@ Imported package:
 Only the normalized PNG files needed by the current first package are stored in `props/`. Do not import the complete raw package into the client first package.
 
 Player cat sprites are not Kenney assets. They are tracked separately under
-`client/assets/art/cc-by/animals_pack/`.
+`client/assets/art/generated/`, with runtime cutouts under
+`client/assets/resources/art/characters/`.

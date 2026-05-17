@@ -65,6 +65,8 @@ export const KITCHEN_01_FIXTURE: ServerMapFixture = {
     { obstacleId: 'obstacle_stove', position: { x: 1088, y: 108 }, size: { width: 198, height: 48 }, blocksMovement: true, allowsOverlap: false },
     { obstacleId: 'obstacle_pantry', position: { x: 1300, y: 120 }, size: { width: 58, height: 98 }, blocksMovement: true, allowsOverlap: false },
     { obstacleId: 'obstacle_center_table', position: { x: 655, y: 410 }, size: { width: 138, height: 66 }, blocksMovement: true, allowsOverlap: false },
-    { obstacleId: 'obstacle_crate_shelf', position: { x: 152, y: 610 }, size: { width: 48, height: 60 }, blocksMovement: true, allowsOverlap: false }
+    { obstacleId: 'obstacle_crate_shelf', position: { x: 152, y: 610 }, size: { width: 48, height: 60 }, blocksMovement: true, allowsOverlap: false },
+    { obstacleId: 'obstacle_upper_left_pillar_base', position: { x: 459, y: 247 }, size: { width: 38, height: 24 }, blocksMovement: true, allowsOverlap: false },
+    { obstacleId: 'obstacle_tall_plant_corner_base', position: { x: 1352, y: 705 }, size: { width: 30, height: 24 }, blocksMovement: true, allowsOverlap: false }
   ],
 };

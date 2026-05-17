@@ -918,33 +918,35 @@ describe('WeChat native fallback debug runtime', () => {
       fallbackScript.includes('cats/anim/${skin}_${frame}.png'),
       'fallback should derive cat animation frame paths from skin and frame ids'
     );
+    assert.ok(fallbackScript.includes("const catAnimationSkin = 'cat_orange_tabby';"));
+    assert.ok(fallbackScript.includes('createCatAnimationSpritePaths([catAnimationSkin], catAnimationFrames)'));
+    assert.doesNotMatch(fallbackScript, /createCatAnimationSpritePaths\(catSkins/);
     for (const sprite of requiredSprites) {
       assert.ok(fallbackScript.includes(`cats/${sprite}`), `fallback should reference ${sprite}`);
       assert.ok(
         existsSync(new URL(`../assets/resources/art/characters/cats/${sprite}`, import.meta.url)),
         `expected selected cat sprite ${sprite}`
       );
-      const skin = sprite.replace(/\.png$/, '');
-      for (const frame of [
-        'idle', 'walk_1', 'walk_2',
-        'front_idle', 'front_walk_1', 'front_walk_2',
-        'back_idle', 'back_walk_1', 'back_walk_2',
-        'diag_front_idle', 'diag_front_walk_1', 'diag_front_walk_2',
-        'diag_back_idle', 'diag_back_walk_1', 'diag_back_walk_2',
-        'side_crouch', 'front_crouch', 'back_crouch',
-        'diag_front_crouch', 'diag_back_crouch',
-        'side_attack_1', 'side_attack_2',
-        'front_attack_1', 'front_attack_2',
-        'back_attack_1', 'back_attack_2',
-        'diag_front_attack_1', 'diag_front_attack_2',
-        'diag_back_attack_1', 'diag_back_attack_2',
-        'attack_1', 'attack_2', 'reveal', 'dizzy'
-      ]) {
-        assert.ok(
-          existsSync(new URL(`../assets/resources/art/characters/cat_animations/${skin}_${frame}.png`, import.meta.url)),
-          `expected generated cat animation frame ${skin}_${frame}`
-        );
-      }
+    }
+    for (const frame of [
+      'idle', 'walk_1', 'walk_2',
+      'front_idle', 'front_walk_1', 'front_walk_2',
+      'back_idle', 'back_walk_1', 'back_walk_2',
+      'diag_front_idle', 'diag_front_walk_1', 'diag_front_walk_2',
+      'diag_back_idle', 'diag_back_walk_1', 'diag_back_walk_2',
+      'side_crouch', 'front_crouch', 'back_crouch',
+      'diag_front_crouch', 'diag_back_crouch',
+      'side_attack_1', 'side_attack_2',
+      'front_attack_1', 'front_attack_2',
+      'back_attack_1', 'back_attack_2',
+      'diag_front_attack_1', 'diag_front_attack_2',
+      'diag_back_attack_1', 'diag_back_attack_2',
+      'attack_1', 'attack_2', 'reveal', 'dizzy'
+    ]) {
+      assert.ok(
+        existsSync(new URL(`../assets/resources/art/characters/cat_animations/cat_orange_tabby_${frame}.png`, import.meta.url)),
+        `expected MVP cat animation frame cat_orange_tabby_${frame}`
+      );
     }
   });
 
@@ -1073,9 +1075,17 @@ describe('WeChat native fallback debug runtime', () => {
     assert.ok(fallbackScript.includes('rect.height * 0.24'));
   });
 
-  it('does not render foreground occluder rectangles as rug-like blocks', () => {
-    assert.doesNotMatch(fallbackScript, /for \(const occluder of soloOccluders\)/);
-    assert.doesNotMatch(fallbackScript, /mapW \* occluder\.width \/ soloMapWidth/);
+  it('renders foreground occluders as semantic fixtures instead of rug-like blocks', () => {
+    assert.ok(fallbackScript.includes('for (const occluder of soloOccluders)'));
+    assert.ok(fallbackScript.includes('function drawKitchenOccluder('));
+    assert.ok(fallbackScript.includes('function drawKitchenTableFrontOccluder('));
+    assert.ok(fallbackScript.includes('function drawKitchenCounterFrontOccluder('));
+    assert.ok(fallbackScript.includes('function drawKitchenPillarOccluder('));
+    assert.ok(fallbackScript.includes('function drawKitchenTallPlantOccluder('));
+    assert.ok(fallbackScript.includes('function drawKitchenCrateStackFrontOccluder('));
+    assert.ok(fallbackScript.includes("id === 'occluder_table_front_edge'"));
+    assert.ok(fallbackScript.includes("id === 'occluder_tall_plant_corner'"));
+    assert.ok(fallbackScript.includes("id.includes('pillar_base') || id.includes('plant_corner_base')"));
     assert.doesNotMatch(fallbackScript, /#b88f56|#d5b780/);
     assert.doesNotMatch(fallbackScript, /for \(let x = 120; x < soloMapWidth/);
     assert.doesNotMatch(fallbackScript, /for \(let y = 90; y < soloMapHeight/);

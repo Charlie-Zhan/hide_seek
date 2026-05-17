@@ -44,14 +44,14 @@ For each imported asset package, mark one:
 | Package | Source URL | License file | Used in first package | Atlas | Approved |
 | --- | --- | --- | --- | --- | --- |
 | Topdown (Shooter) Pack | https://www.kenney.nl/assets/top-down-shooter | `client/assets/art/kenney/licenses/kenney_top-down-shooter_LICENSE.txt` | yes, selected normalized PNGs only | `atlas_gameplay_props` metadata; runtime PNG set | yes |
-| Generated cat player sprites | local generated asset | `client/assets/art/generated/cats/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_players_manifest` metadata; runtime PNG set | yes |
-| Generated cat animation sprites | local generated asset | `client/assets/art/generated/cat_animations/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_animation_manifest` metadata; runtime PNG set | yes |
-| Generated cat direction sprites | local generated asset | `client/assets/art/generated/cat_directions/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_direction_manifest` metadata; runtime PNG set | yes |
-| Generated cat diagonal sprites | local generated asset | `client/assets/art/generated/cat_diagonals/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_diagonal_manifest` metadata; runtime PNG set | yes |
-| Generated cat crouch sprites | local generated asset | `client/assets/art/generated/cat_crouches/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_crouch_manifest` metadata; runtime PNG set | yes |
-| Generated cat directional attack sprites | local generated asset | `client/assets/art/generated/cat_directional_attacks/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_directional_attack_manifest` metadata; runtime PNG set | yes |
-| Generated cat back attack sprites | local generated asset | `client/assets/art/generated/cat_back_attacks/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_directional_attack_manifest` metadata; runtime PNG set | yes |
-| Generated kitchen V2 props | local generated asset | `client/assets/art/generated/kitchen_props_v2/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `kitchen_v2_manifest` metadata; runtime PNG set | yes |
+| Generated cat player sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cats/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_players_manifest` metadata; runtime PNG set | yes |
+| Generated cat animation sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cat_animations/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_animation_manifest` metadata; runtime PNG set | yes |
+| Generated cat direction sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cat_directions/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_direction_manifest` metadata; runtime PNG set | yes |
+| Generated cat diagonal sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cat_diagonals/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_diagonal_manifest` metadata; runtime PNG set | yes |
+| Generated cat crouch sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cat_crouches/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_crouch_manifest` metadata; runtime PNG set | yes |
+| Generated cat directional attack sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cat_directional_attacks/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_directional_attack_manifest` metadata; runtime PNG set | yes |
+| Generated cat back attack sprites | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/cat_back_attacks/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `cat_directional_attack_manifest` metadata; runtime PNG set | yes |
+| Generated kitchen V2 props | local generated asset | `client/assets/art/generated/README.md`; `client/assets/art/generated/kitchen_props_v2/PROMPT.md` | yes, selected chroma-key cutout PNGs only | `kitchen_v2_manifest` metadata; runtime PNG set | yes |
 
 Reject the build if a real asset is present without a matching source and
 license record.

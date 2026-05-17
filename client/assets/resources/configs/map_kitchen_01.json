@@ -1541,8 +1541,8 @@
       },
       "layer": "object_front",
       "isOccluder": true,
-      "blocksMovement": false,
-      "allowsOverlap": true
+      "blocksMovement": true,
+      "allowsOverlap": false
     },
     {
       "id": "occluder_right_counter_foreground",
@@ -1573,8 +1573,8 @@
       },
       "layer": "object_front",
       "isOccluder": true,
-      "blocksMovement": false,
-      "allowsOverlap": true
+      "blocksMovement": true,
+      "allowsOverlap": false
     },
     {
       "id": "occluder_crate_stack_front",
