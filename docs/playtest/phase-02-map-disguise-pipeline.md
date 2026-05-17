@@ -6,7 +6,7 @@ Validate `kitchen_01`, the map-level disguise pool, breakable prop behavior, occ
 
 ## Manual Checks
 
-- Kitchen map loads as one full 1280x720 play area.
+- Kitchen map loads as one full 1440x810 play area.
 - Landmarks are readable: fridge area, stove area, center table, crate pile, trash/plant corner.
 - Props are distributed in small groups and isolated placements, not an unreadable pile.
 - Hiders can cycle only through the map pool: wooden crate, trash bin, plant pot, chair, water bucket, food basket.

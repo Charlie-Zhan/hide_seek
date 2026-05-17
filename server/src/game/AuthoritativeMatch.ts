@@ -1,4 +1,19 @@
-import { clamp, clampVector2, cloneVector2, facingToDegrees, isNonZeroVector, isPointInSector, moveToward, normalizeVector2, RIGHT_VECTOR, ZERO_VECTOR } from './Geometry2D.js';
+import {
+  circleCircleSeparation,
+  circleIntersectsCircle,
+  circleRectSeparation,
+  clamp,
+  clampCircleToBounds,
+  cloneVector2,
+  facingToDegrees,
+  isPointInsideRect,
+  isNonZeroVector,
+  isPointInSector,
+  moveToward,
+  normalizeVector2,
+  RIGHT_VECTOR,
+  ZERO_VECTOR,
+} from './Geometry2D.js';
 import { KITCHEN_01_FIXTURE } from './KitchenFixture.js';
 import { SERVER_GAME_CONFIG } from './ServerGameConfig.js';
 import {
@@ -17,12 +32,19 @@ import {
   type PublicV2ObjectiveState,
   type RoundEndReason,
   type ServerMapFixture,
+  type ServerCollisionRect,
   type ServerPropInstance,
   type Vector2,
 } from './ServerGameTypes.js';
 
 const HIDE_IDLE_DISGUISE_MS = 250;
 const DISCONNECT_GRACE_MS = 10000;
+const PLAYER_MOVEMENT_RADIUS_PX = 12;
+const MIN_HIDER_MOVEMENT_RADIUS_PX = 10;
+const MAX_HIDER_MOVEMENT_RADIUS_PX = 14;
+const PROP_MOVEMENT_RADIUS_SCALE = 1;
+const RECT_COLLISION_INSET_PX = 0;
+const COLLISION_ESCAPE_EPSILON = 0.001;
 
 interface ServerMatchPlayer {
   readonly playerId: string;
@@ -224,15 +246,17 @@ export class AuthoritativeMatch {
     for (const player of this.players) {
       const speed = this.getSpeedForPlayer(player);
       const canMove = speed > 0 && !player.captured && isNonZeroVector(player.input);
-      player.isMoving = canMove;
+      player.isMoving = false;
 
       if (canMove) {
         player.facing = normalizeVector2(player.input, player.facing);
-        player.position = clampVector2(
-          moveToward(player.position, player.input, speed, deltaMs),
-          this.fixture.width,
-          this.fixture.height
-        );
+        const previousPosition = cloneVector2(player.position);
+        const intendedPosition = moveToward(player.position, player.input, speed, deltaMs);
+        player.position = this.resolveMovement(player, intendedPosition);
+        player.isMoving = isNonZeroVector({
+          x: player.position.x - previousPosition.x,
+          y: player.position.y - previousPosition.y,
+        });
       }
 
       this.updatePlayerState(player, deltaMs);
@@ -699,6 +723,125 @@ export class AuthoritativeMatch {
     return 0;
   }
 
+  private resolveMovement(player: ServerMatchPlayer, intendedPosition: Vector2): Vector2 {
+    const radius = this.getCollisionRadiusForPlayer(player);
+    const startPosition = cloneVector2(player.position);
+    const dx = intendedPosition.x - startPosition.x;
+    const dy = intendedPosition.y - startPosition.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= 0.00001) {
+      return this.clampPositionToMap(startPosition, radius);
+    }
+
+    const stepCount = Math.max(1, Math.ceil(distance / Math.max(4, radius * 0.5)));
+    let currentPosition = startPosition;
+
+    for (let step = 0; step < stepCount; step += 1) {
+      const nextTarget = {
+        x: currentPosition.x + dx / stepCount,
+        y: currentPosition.y + dy / stepCount,
+      };
+      const nextPosition = this.resolveMovementStep(player, currentPosition, nextTarget, radius);
+      if (!isNonZeroVector({ x: nextPosition.x - currentPosition.x, y: nextPosition.y - currentPosition.y })) {
+        break;
+      }
+      currentPosition = nextPosition;
+    }
+
+    return currentPosition;
+  }
+
+  private resolveMovementStep(
+    player: ServerMatchPlayer,
+    startPosition: Vector2,
+    intendedPosition: Vector2,
+    radius: number
+  ): Vector2 {
+    const desiredPosition = this.clampPositionToMap(intendedPosition, radius);
+    if (!this.isMovementBlocked(player, desiredPosition, radius, startPosition)) {
+      return desiredPosition;
+    }
+
+    const xOnlyPosition = this.clampPositionToMap({ x: desiredPosition.x, y: startPosition.y }, radius);
+    if (!this.isMovementBlocked(player, xOnlyPosition, radius, startPosition)) {
+      return xOnlyPosition;
+    }
+
+    const yOnlyPosition = this.clampPositionToMap({ x: startPosition.x, y: desiredPosition.y }, radius);
+    if (!this.isMovementBlocked(player, yOnlyPosition, radius, startPosition)) {
+      return yOnlyPosition;
+    }
+
+    return startPosition;
+  }
+
+  private isMovementBlocked(
+    player: ServerMatchPlayer,
+    position: Vector2,
+    radius: number,
+    startPosition: Vector2
+  ): boolean {
+    for (const prop of this.props) {
+      const propCollisionRadius = getPropMovementRadius(prop.radius);
+      if (prop.destroyed || prop.blocksMovement === false) {
+        continue;
+      }
+
+      if (shouldBlockCircleMovement(position, radius, prop.position, propCollisionRadius, startPosition)) {
+        return true;
+      }
+    }
+
+    for (const obstacle of this.fixture.obstacles ?? []) {
+      const collisionRect = insetCollisionRect(obstacle);
+      if (obstacle.blocksMovement === false || obstacle.allowsOverlap === true) {
+        continue;
+      }
+
+      if (shouldBlockRectMovement(position, radius, collisionRect, startPosition)) {
+        return true;
+      }
+    }
+
+    if (!doesPhaseBlockPlayerBodies(this.phase)) {
+      return false;
+    }
+
+    for (const otherPlayer of this.players) {
+      if (otherPlayer.playerId === player.playerId || otherPlayer.captured) {
+        continue;
+      }
+
+      const otherRadius = this.getCollisionRadiusForPlayer(otherPlayer);
+      if (shouldBlockCircleMovement(position, radius, otherPlayer.position, otherRadius, startPosition)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private clampPositionToMap(position: Vector2, radius: number): Vector2 {
+    if (this.fixture.movementBounds) {
+      return clampCircleToMovementBounds(position, radius, this.fixture.movementBounds);
+    }
+
+    return clampCircleToBounds(position, radius, this.fixture.width, this.fixture.height);
+  }
+
+  private getCollisionRadiusForPlayer(player: ServerMatchPlayer): number {
+    if (player.captured) {
+      return 0;
+    }
+
+    if (player.role !== PlayerRole.Hider) {
+      return PLAYER_MOVEMENT_RADIUS_PX;
+    }
+
+    const propRadius = this.fixture.propRadiusById[player.currentPropId] ?? 18;
+    return Math.max(MIN_HIDER_MOVEMENT_RADIUS_PX, Math.min(MAX_HIDER_MOVEMENT_RADIUS_PX, propRadius * 0.6));
+  }
+
   private getCurrentPhaseDurationMs(): number {
     if (this.phase === RoundPhase.Preview) {
       return this.config.previewDurationMs;
@@ -804,8 +947,11 @@ function toPublicProp(prop: ServerPropInstance): PublicMatchPropState {
     propInstanceId: prop.propInstanceId,
     propConfigId: prop.propConfigId,
     position: cloneVector2(prop.position),
+    radius: prop.radius,
     rotationDeg: 0,
     isDestroyed: prop.destroyed,
+    isBreakable: prop.breakable,
+    blocksMovement: prop.blocksMovement !== false,
   };
 }
 
@@ -846,4 +992,115 @@ function isWithinRadius(a: Vector2, b: Vector2, radius: number): boolean {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   return dx * dx + dy * dy <= radius * radius;
+}
+
+function getPropMovementRadius(propRadius: number): number {
+  return Math.max(8, propRadius * PROP_MOVEMENT_RADIUS_SCALE);
+}
+
+function doesPhaseBlockPlayerBodies(phase: RoundPhase): boolean {
+  return phase === RoundPhase.Hide || phase === RoundPhase.Seek;
+}
+
+function insetCollisionRect(rect: ServerCollisionRect): ServerCollisionRect {
+  const movementRect = getObstacleMovementRect(rect);
+  const insetX = Math.min(RECT_COLLISION_INSET_PX, Math.max(0, (movementRect.size.width - 4) / 2));
+  const insetY = Math.min(RECT_COLLISION_INSET_PX, Math.max(0, (movementRect.size.height - 4) / 2));
+  return {
+    ...movementRect,
+    position: {
+      x: movementRect.position.x + insetX,
+      y: movementRect.position.y + insetY,
+    },
+    size: {
+      width: movementRect.size.width - insetX * 2,
+      height: movementRect.size.height - insetY * 2,
+    },
+  };
+}
+
+function getObstacleMovementRect(rect: ServerCollisionRect): ServerCollisionRect {
+  if (!isStandingFixtureObstacle(rect.obstacleId)) {
+    return rect;
+  }
+
+  return {
+    ...rect,
+    position: {
+      x: rect.position.x + rect.size.width * 0.18,
+      y: rect.position.y + rect.size.height * 0.72,
+    },
+    size: {
+      width: rect.size.width * 0.64,
+      height: rect.size.height * 0.24,
+    },
+  };
+}
+
+function isStandingFixtureObstacle(obstacleId: string): boolean {
+  return obstacleId === 'obstacle_fridge' ||
+    obstacleId === 'obstacle_pantry' ||
+    obstacleId === 'obstacle_crate_shelf';
+}
+
+function clampCircleToMovementBounds(
+  position: Vector2,
+  radius: number,
+  bounds: NonNullable<ServerMapFixture['movementBounds']>
+): Vector2 {
+  const safeRadius = Math.max(0, radius);
+  return {
+    x: clampNumber(position.x, bounds.minX + safeRadius, bounds.maxX - safeRadius),
+    y: clampNumber(position.y, bounds.minY + safeRadius, bounds.maxY - safeRadius),
+  };
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (min > max) {
+    return (min + max) / 2;
+  }
+  return Math.max(min, Math.min(max, value));
+}
+
+function shouldBlockCircleMovement(
+  position: Vector2,
+  radius: number,
+  blockerPosition: Vector2,
+  blockerRadius: number,
+  startPosition: Vector2
+): boolean {
+  const candidateSeparation = circleCircleSeparation(position, radius, blockerPosition, blockerRadius);
+  if (candidateSeparation >= 0) {
+    return false;
+  }
+
+  const startSeparation = circleCircleSeparation(startPosition, radius, blockerPosition, blockerRadius);
+  if (startSeparation < 0 && candidateSeparation >= startSeparation - COLLISION_ESCAPE_EPSILON) {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldBlockRectMovement(
+  position: Vector2,
+  radius: number,
+  rect: ServerCollisionRect,
+  startPosition: Vector2
+): boolean {
+  const candidateSeparation = circleRectSeparation(position, radius, rect);
+  if (candidateSeparation >= 0) {
+    return false;
+  }
+
+  const startSeparation = circleRectSeparation(startPosition, radius, rect);
+  if (startSeparation < 0) {
+    if (isPointInsideRect(startPosition, rect) && isPointInsideRect(position, rect)) {
+      return candidateSeparation <= startSeparation + COLLISION_ESCAPE_EPSILON;
+    }
+
+    return candidateSeparation < startSeparation - COLLISION_ESCAPE_EPSILON;
+  }
+
+  return true;
 }

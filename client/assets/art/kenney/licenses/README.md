@@ -2,12 +2,10 @@
 
 Keep source URLs, package names, and license files for imported Kenney assets in this directory.
 
-Phase 02 still uses placeholder config and atlas records only; no final art assets are imported yet.
+## Imported Records
 
-Before any sprite files are added, create a license record with:
+| Package | Source URL | Retrieved | License | Covers |
+| --- | --- | --- | --- | --- |
+| Topdown (Shooter) Pack | https://www.kenney.nl/assets/top-down-shooter | 2026-05-15 | `kenney_top-down-shooter_LICENSE.txt` | `prop_wooden_crate`, `prop_trash_bin`, `prop_plant_pot`, `prop_chair`, `prop_water_bucket`, `prop_food_basket`, `map_stove`, `map_sink`, `map_counter` |
 
-- Kenney package name;
-- source URL;
-- retrieval date;
-- copied license text or license filename;
-- normalized output sprite names covered by that package.
+Keep raw full packages outside the client first package. Promote only normalized runtime files that are covered by a record here.

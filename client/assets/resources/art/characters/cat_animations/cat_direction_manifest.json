@@ -1,0 +1,176 @@
+{
+  "source": "client/assets/art/generated/cat_directions/source/gpt_image_2_cat_direction_sheet.png",
+  "grid": {
+    "rows": 5,
+    "columns": 6,
+    "cellWidth": 228,
+    "cellHeight": 229
+  },
+  "skins": [
+    "cat_orange_tabby",
+    "cat_gray_tuxedo",
+    "cat_calico",
+    "cat_black",
+    "cat_siamese"
+  ],
+  "frames": [
+    "front_idle",
+    "front_walk_1",
+    "front_walk_2",
+    "back_idle",
+    "back_walk_1",
+    "back_walk_2"
+  ],
+  "files": [
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_front_idle.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_front_walk_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_front_walk_2.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_back_idle.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_back_walk_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_back_walk_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_front_idle.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_front_walk_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_front_walk_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_back_idle.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_back_walk_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_back_walk_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_front_idle.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_front_walk_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_front_walk_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_back_idle.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_back_walk_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_back_walk_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_front_idle.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_front_walk_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_front_walk_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_back_idle.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_back_walk_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_back_walk_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_front_idle.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_front_walk_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_front_walk_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_back_idle.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_back_walk_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_back_walk_2.png"
+    }
+  ]
+}

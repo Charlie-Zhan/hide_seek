@@ -280,7 +280,7 @@ export class NetworkClient {
       return this.createWeChatSocket(serverUrl, wechatApi, socketToken);
     }
 
-    const BrowserSocket = (globalThis as { WebSocket?: BrowserSocketConstructor }).WebSocket;
+    const BrowserSocket = (globalThis as unknown as { WebSocket?: BrowserSocketConstructor }).WebSocket;
     if (!BrowserSocket) {
       throw new Error('No WebSocket implementation is available.');
     }

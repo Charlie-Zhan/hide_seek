@@ -1,12 +1,17 @@
-# Kenney Asset Placeholder
+# Kenney Assets
 
-No Kenney source art has been imported yet.
+Selected Kenney source art is imported for the MVP prop set.
 
-Phase 02 adds placeholder atlas metadata for `atlas_gameplay_props` only. The six MVP prop sprite paths are reserved for config and loader integration, but no unauthorized art bytes are present.
+Imported package:
 
-Before replacing placeholders with real assets:
+- Package: Topdown (Shooter) Pack
+- Source: https://www.kenney.nl/assets/top-down-shooter
+- License: Creative Commons Zero, CC0
+- License record: `licenses/kenney_top-down-shooter_LICENSE.txt`
+- Retrieval date: 2026-05-15
 
-- record the Kenney package name and source URL;
-- copy the license text into `licenses/`;
-- normalize sprite names to the project naming convention;
-- generate purpose-specific atlases instead of importing full raw packs into the first package.
+Only the normalized PNG files needed by the current first package are stored in `props/`. Do not import the complete raw package into the client first package.
+
+Player cat sprites are not Kenney assets. They are tracked separately under
+`client/assets/art/generated/`, with runtime cutouts under
+`client/assets/resources/art/characters/`.

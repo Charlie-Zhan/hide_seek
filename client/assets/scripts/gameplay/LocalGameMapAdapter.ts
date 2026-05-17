@@ -1,6 +1,6 @@
-import type { LoadedMapState, LoadedMapSpawnPoint } from '../map/MapManager';
+import type { LoadedMapState, LoadedMapSpawnPoint, LoadedMapVolumeState } from '../map/MapManager';
 import type { PropInstanceState } from '../map/PropInstance';
-import type { GameConfig, LocalGameSetup, LocalPropInstance, Vector2 } from './LocalGameTypes';
+import type { GameConfig, LocalCollisionRect, LocalGameSetup, LocalMovementBounds, LocalPropInstance, Vector2 } from './LocalGameTypes';
 
 export interface LocalGameMapPlayerInput {
   playerId: string;
@@ -12,9 +12,12 @@ export interface LocalGameMapPlayerInput {
 export interface LocalGameMapSetupPieces {
   availablePropIds: string[];
   props: LocalPropInstance[];
+  obstacles: LocalCollisionRect[];
   players: LocalGameSetup['players'];
   seekerSpawnPoint: Vector2;
   spawnPoints: Vector2[];
+  mapSize: { width: number; height: number };
+  movementBounds: LocalMovementBounds;
 }
 
 export interface LocalGameMapSetupOptions {
@@ -34,6 +37,11 @@ export function createLocalGameSetupFromMap(
     players: pieces.players,
     availablePropIds: pieces.availablePropIds,
     props: pieces.props,
+    obstacles: pieces.obstacles,
+    mapSize: pieces.mapSize,
+    seekerSpawnPoint: pieces.seekerSpawnPoint,
+    spawnPoints: pieces.spawnPoints,
+    movementBounds: pieces.movementBounds,
     hideIdleDisguiseMs: options.hideIdleDisguiseMs
   };
 }
@@ -49,6 +57,7 @@ export function createLocalGameMapSetupPieces(
   return {
     availablePropIds,
     props: mapState.props.map(toLocalPropInstance),
+    obstacles: getBlockingVolumes(mapState),
     players: players.map((player, index) => ({
       playerId: player.playerId,
       displayName: player.displayName,
@@ -57,7 +66,9 @@ export function createLocalGameMapSetupPieces(
       initialPropId: player.initialPropId ?? getInitialPropId(availablePropIds, index - 1)
     })),
     seekerSpawnPoint,
-    spawnPoints
+    spawnPoints,
+    mapSize: { width: mapState.width, height: mapState.height },
+    movementBounds: getMapMovementBounds(mapState)
   };
 }
 
@@ -68,7 +79,75 @@ export function toLocalPropInstance(prop: PropInstanceState): LocalPropInstance 
     position: cloneVector(prop.position),
     radius: prop.radius,
     breakable: prop.isBreakable,
-    destroyed: prop.destroyed
+    destroyed: prop.destroyed,
+    blocksMovement: prop.blocksMovement
+  };
+}
+
+function getBlockingVolumes(mapState: LoadedMapState): LocalCollisionRect[] {
+  return [...mapState.obstacles, ...mapState.occluders.filter((occluder) => occluder.blocksMovement)]
+    .filter((volume) => volume.blocksMovement && !volume.allowsOverlap)
+    .map(toLocalCollisionRect);
+}
+
+function toLocalCollisionRect(volume: LoadedMapVolumeState): LocalCollisionRect {
+  const collisionVolume = toMovementCollisionVolume(volume);
+  return {
+    id: collisionVolume.id,
+    position: cloneVector(collisionVolume.position),
+    size: { ...collisionVolume.size },
+    blocksMovement: collisionVolume.blocksMovement,
+    allowsOverlap: collisionVolume.allowsOverlap
+  };
+}
+
+function toMovementCollisionVolume(volume: LoadedMapVolumeState): LoadedMapVolumeState {
+  if (volume.id === 'occluder_upper_left_pillar') {
+    return toRelativeCollisionVolume(volume, 0.21, 0.72, 0.60, 0.16);
+  }
+  if (volume.id === 'occluder_tall_plant_corner') {
+    return toRelativeCollisionVolume(volume, 0.31, 0.41, 0.35, 0.18);
+  }
+  if (!isStandingFixtureVolume(volume.id)) {
+    return volume;
+  }
+
+  return toRelativeCollisionVolume(volume, 0.18, 0.72, 0.64, 0.24);
+}
+
+function toRelativeCollisionVolume(
+  volume: LoadedMapVolumeState,
+  offsetX: number,
+  offsetY: number,
+  widthScale: number,
+  heightScale: number
+): LoadedMapVolumeState {
+  return {
+    ...volume,
+    position: {
+      x: volume.position.x + volume.size.width * offsetX,
+      y: volume.position.y + volume.size.height * offsetY
+    },
+    size: {
+      width: volume.size.width * widthScale,
+      height: volume.size.height * heightScale
+    }
+  };
+}
+
+function isStandingFixtureVolume(volumeId: string): boolean {
+  return volumeId === 'obstacle_fridge' ||
+    volumeId === 'obstacle_pantry' ||
+    volumeId === 'obstacle_crate_shelf';
+}
+
+function getMapMovementBounds(mapState: LoadedMapState): LocalMovementBounds {
+  const inset = Math.min(80, Math.max(0, mapState.width / 4), Math.max(0, mapState.height / 4));
+  return {
+    minX: inset,
+    minY: inset,
+    maxX: mapState.width - inset,
+    maxY: mapState.height - inset
   };
 }
 

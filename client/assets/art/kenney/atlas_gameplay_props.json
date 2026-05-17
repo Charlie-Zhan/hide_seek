@@ -1,17 +1,19 @@
 {
   "id": "atlas_gameplay_props",
-  "displayName": "Gameplay Props Atlas Placeholder",
-  "status": "placeholder_records_only",
-  "description": "Phase 02 metadata for prop sprites. No source art or generated atlas image is imported yet.",
+  "displayName": "Gameplay Props Atlas",
+  "status": "selected_kenney_png_runtime_set",
+  "description": "Phase 02 metadata for selected Kenney Topdown Shooter prop sprites promoted into the MVP runtime.",
   "targetAtlasPath": "client/assets/art/kenney/props/atlas_gameplay_props.png",
   "sourceRecordPath": "tools/asset-pipeline/kenney_sources_phase_02.json",
-  "licenseRecordPath": "client/assets/art/kenney/licenses/README.md",
+  "licenseRecordPath": "client/assets/art/kenney/licenses/kenney_top-down-shooter_LICENSE.txt",
+  "sourcePackage": "Topdown (Shooter) Pack",
+  "sourceUrl": "https://www.kenney.nl/assets/top-down-shooter",
   "sprites": [
     {
       "id": "prop_wooden_crate",
       "configId": "wooden_crate",
-      "placeholderPath": "art/kenney/props/prop_wooden_crate",
-      "intendedSource": "Kenney top-down or kitchen-compatible prop pack",
+      "path": "art/kenney/props/prop_wooden_crate.png",
+      "sourceSprite": "PNG/Tiles/tile_129.png",
       "frame": {
         "x": 0,
         "y": 0,
@@ -22,8 +24,8 @@
     {
       "id": "prop_trash_bin",
       "configId": "trash_bin",
-      "placeholderPath": "art/kenney/props/prop_trash_bin",
-      "intendedSource": "Kenney top-down or kitchen-compatible prop pack",
+      "path": "art/kenney/props/prop_trash_bin.png",
+      "sourceSprite": "PNG/Tiles/tile_243.png",
       "frame": {
         "x": 64,
         "y": 0,
@@ -34,8 +36,8 @@
     {
       "id": "prop_plant_pot",
       "configId": "plant_pot",
-      "placeholderPath": "art/kenney/props/prop_plant_pot",
-      "intendedSource": "Kenney top-down or kitchen-compatible prop pack",
+      "path": "art/kenney/props/prop_plant_pot.png",
+      "sourceSprite": "PNG/Tiles/tile_134.png",
       "frame": {
         "x": 128,
         "y": 0,
@@ -46,8 +48,8 @@
     {
       "id": "prop_chair",
       "configId": "chair",
-      "placeholderPath": "art/kenney/props/prop_chair",
-      "intendedSource": "Kenney top-down or kitchen-compatible prop pack",
+      "path": "art/kenney/props/prop_chair.png",
+      "sourceSprite": "PNG/Tiles/tile_529.png",
       "frame": {
         "x": 192,
         "y": 0,
@@ -58,8 +60,8 @@
     {
       "id": "prop_water_bucket",
       "configId": "water_bucket",
-      "placeholderPath": "art/kenney/props/prop_water_bucket",
-      "intendedSource": "Kenney top-down or kitchen-compatible prop pack",
+      "path": "art/kenney/props/prop_water_bucket.png",
+      "sourceSprite": "PNG/Tiles/tile_318.png",
       "frame": {
         "x": 256,
         "y": 0,
@@ -70,8 +72,8 @@
     {
       "id": "prop_food_basket",
       "configId": "food_basket",
-      "placeholderPath": "art/kenney/props/prop_food_basket",
-      "intendedSource": "Kenney top-down or kitchen-compatible prop pack",
+      "path": "art/kenney/props/prop_food_basket.png",
+      "sourceSprite": "PNG/Tiles/tile_534.png",
       "frame": {
         "x": 320,
         "y": 0,
@@ -81,7 +83,7 @@
     }
   ],
   "buildNotes": [
-    "Replace placeholder records only after the selected Kenney package URL and license copy are recorded.",
+    "Use the selected normalized PNG files until a packed atlas image is generated.",
     "Keep generated atlas output purpose-specific; do not import complete raw packs into the client package.",
     "Maintain config ids in snake_case and sprite ids with the prop_ prefix."
   ]

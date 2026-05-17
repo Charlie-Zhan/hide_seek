@@ -60,7 +60,7 @@ describe('Phase 06 UI display state polish', () => {
     assert.equal(display.gameplayEntryText, 'How to Play');
     assert.ok(display.gameplaySummaryLines.some((line) => line.includes('limited cone attacks')));
     assert.equal(display.connectionStatusText, 'Connected');
-    assert.equal(display.soloButtonText, 'Solo Practice');
+    assert.equal(display.soloButtonText, 'Solo Match');
     assert.equal(display.soloComputerCountText, '2 Computer Players');
     assert.deepEqual(sentMessages.at(-1), {
       type: 'join_room',
@@ -69,7 +69,7 @@ describe('Phase 06 UI display state polish', () => {
     });
   });
 
-  it('starts solo practice from Lobby without a room server', () => {
+  it('starts solo match from Lobby without a room server', () => {
     const lobby = new LobbyUI();
 
     lobby.setPlayerName('  Solo Mia  ');

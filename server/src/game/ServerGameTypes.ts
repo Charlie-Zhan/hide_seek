@@ -66,19 +66,40 @@ export interface ServerPropInstance {
   readonly position: Vector2;
   readonly radius: number;
   readonly breakable: boolean;
+  readonly blocksMovement?: boolean;
   destroyed: boolean;
+}
+
+export interface ServerCollisionRect {
+  readonly obstacleId: string;
+  readonly position: Vector2;
+  readonly size: {
+    readonly width: number;
+    readonly height: number;
+  };
+  readonly blocksMovement?: boolean;
+  readonly allowsOverlap?: boolean;
+}
+
+export interface ServerMovementBounds {
+  readonly minX: number;
+  readonly minY: number;
+  readonly maxX: number;
+  readonly maxY: number;
 }
 
 export interface ServerMapFixture {
   readonly mapId: string;
   readonly width: number;
   readonly height: number;
+  readonly movementBounds?: ServerMovementBounds;
   readonly seekerSpawn: Vector2;
   readonly seekerFacing: Vector2;
   readonly hiderSpawns: Vector2[];
   readonly propPool: string[];
   readonly propRadiusById: Record<string, number>;
   readonly props: ServerPropInstance[];
+  readonly obstacles?: ServerCollisionRect[];
   readonly v2ObjectivePoints?: Vector2[];
   readonly v2EventZones?: Vector2[];
 }
@@ -131,8 +152,11 @@ export interface PublicMatchPropState {
   readonly propInstanceId: string;
   readonly propConfigId: string;
   readonly position: Vector2;
+  readonly radius: number;
   readonly rotationDeg: number;
   readonly isDestroyed: boolean;
+  readonly isBreakable: boolean;
+  readonly blocksMovement: boolean;
 }
 
 export type PublicV2ObjectiveState = {
