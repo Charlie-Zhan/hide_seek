@@ -79,10 +79,10 @@ Notes:
 
 | Match ID | Round | Seeker | Hider count | Captures | Survivors | Attack count started | Attacks used | Attacks remaining | End reason | Round duration sec | Score consistent on all devices | Notes |
 |---|---:|---|---:|---:|---:|---:|---:|---:|---|---:|---|---|
-|  | 1 |  |  |  |  |  |  |  | all_captured / attacks_used / timer / disconnect |  | yes / no |  |
-|  | 2 |  |  |  |  |  |  |  | all_captured / attacks_used / timer / disconnect |  | yes / no |  |
-|  | 3 |  |  |  |  |  |  |  | all_captured / attacks_used / timer / disconnect |  | yes / no |  |
-|  | 4 |  |  |  |  |  |  |  | all_captured / attacks_used / timer / disconnect |  | yes / no |  |
+|  | 1 |  |  |  |  |  |  |  | all_captured / attacks_used / time_up / seeker_disconnected |  | yes / no |  |
+|  | 2 |  |  |  |  |  |  |  | all_captured / attacks_used / time_up / seeker_disconnected |  | yes / no |  |
+|  | 3 |  |  |  |  |  |  |  | all_captured / attacks_used / time_up / seeker_disconnected |  | yes / no |  |
+|  | 4 |  |  |  |  |  |  |  | all_captured / attacks_used / time_up / seeker_disconnected |  | yes / no |  |
 
 ## Phase Checklist
 

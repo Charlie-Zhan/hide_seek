@@ -201,7 +201,7 @@ function roundStarted(): FeedbackEvent {
 function roundEnded(): FeedbackEvent {
   return {
     type: FeedbackEventType.RoundEnded,
-    reason: 'attacks_depleted',
+    reason: 'attacks_used',
     roundIndex: 0
   };
 }

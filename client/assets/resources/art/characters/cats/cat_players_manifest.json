@@ -1,0 +1,36 @@
+{
+  "id": "cat_player_sprites",
+  "displayName": "Cat Player Sprites",
+  "source": "OpenAI image generation through Codex built-in image_gen",
+  "sourceAuthor": "Generated project asset",
+  "license": "Generated project asset",
+  "sourceRecordPath": "client/assets/art/generated/cats/README.md",
+  "promptRecordPath": "client/assets/art/generated/cats/PROMPT.md",
+  "sprites": [
+    {
+      "id": "cat_orange_tabby",
+      "displayName": "Orange Tabby",
+      "path": "art/characters/cats/cat_orange_tabby"
+    },
+    {
+      "id": "cat_gray_tuxedo",
+      "displayName": "Gray Tuxedo",
+      "path": "art/characters/cats/cat_gray_tuxedo"
+    },
+    {
+      "id": "cat_calico",
+      "displayName": "Calico",
+      "path": "art/characters/cats/cat_calico"
+    },
+    {
+      "id": "cat_black",
+      "displayName": "Black Cat",
+      "path": "art/characters/cats/cat_black"
+    },
+    {
+      "id": "cat_siamese",
+      "displayName": "Siamese",
+      "path": "art/characters/cats/cat_siamese"
+    }
+  ]
+}

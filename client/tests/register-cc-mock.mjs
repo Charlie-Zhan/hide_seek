@@ -12,6 +12,8 @@ writeFileSync(
   join(ccModuleDir, 'index.js'),
   `export class Component {}
 export class JsonAsset { constructor(json = null) { this.json = json; } }
+export class Mask extends Component {}
+Mask.Type = { RECT: 0 };
 export const _decorator = {
   ccclass() { return function ccclassDecorator(value) { return value; }; },
   property() { return function propertyDecorator() {}; }

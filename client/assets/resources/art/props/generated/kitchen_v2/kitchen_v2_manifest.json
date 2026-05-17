@@ -1,0 +1,47 @@
+{
+  "id": "generated_kitchen_v2_props",
+  "displayName": "Generated Kitchen V2 Props",
+  "source": "OpenAI image generation through Codex built-in image_gen",
+  "sourceAuthor": "Generated project asset",
+  "license": "Generated project asset",
+  "sourceRecordPath": "client/assets/art/generated/kitchen_props_v2/README.md",
+  "promptRecordPath": "client/assets/art/generated/kitchen_props_v2/PROMPT.md",
+  "sprites": [
+    {
+      "id": "wooden_crate",
+      "path": "art/props/generated/kitchen_v2/prop_wooden_crate"
+    },
+    {
+      "id": "trash_bin",
+      "path": "art/props/generated/kitchen_v2/prop_trash_bin"
+    },
+    {
+      "id": "plant_pot",
+      "path": "art/props/generated/kitchen_v2/prop_plant_pot"
+    },
+    {
+      "id": "chair",
+      "path": "art/props/generated/kitchen_v2/prop_chair"
+    },
+    {
+      "id": "water_bucket",
+      "path": "art/props/generated/kitchen_v2/prop_water_bucket"
+    },
+    {
+      "id": "food_basket",
+      "path": "art/props/generated/kitchen_v2/prop_food_basket"
+    },
+    {
+      "id": "map_stove",
+      "path": "art/props/generated/kitchen_v2/map_stove"
+    },
+    {
+      "id": "map_sink",
+      "path": "art/props/generated/kitchen_v2/map_sink"
+    },
+    {
+      "id": "map_counter",
+      "path": "art/props/generated/kitchen_v2/map_counter"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "phase": "02",
-  "status": "source_selection_pending",
+  "status": "selected_imported_minimal_runtime_set",
   "policy": {
     "allowedSources": [
       "Kenney.nl asset packages with recorded source URL and license"
@@ -31,10 +31,23 @@
         "prop_water_bucket",
         "prop_food_basket"
       ],
-      "sourcePackage": null,
-      "sourceUrl": null,
-      "licenseFile": null,
-      "notes": "Placeholder metadata only in Phase 02 worker A; no art bytes imported."
+      "sourcePackage": "Topdown (Shooter) Pack",
+      "sourceUrl": "https://www.kenney.nl/assets/top-down-shooter",
+      "downloadUrl": "https://www.kenney.nl/media/pages/assets/top-down-shooter/4e195f4fff-1677694684/kenney_top-down-shooter.zip",
+      "licenseFile": "client/assets/art/kenney/licenses/kenney_top-down-shooter_LICENSE.txt",
+      "retrievedDate": "2026-05-15",
+      "sourceSpriteMap": {
+        "prop_wooden_crate": "PNG/Tiles/tile_129.png",
+        "prop_trash_bin": "PNG/Tiles/tile_243.png",
+        "prop_plant_pot": "PNG/Tiles/tile_134.png",
+        "prop_chair": "PNG/Tiles/tile_529.png",
+        "prop_water_bucket": "PNG/Tiles/tile_318.png",
+        "prop_food_basket": "PNG/Tiles/tile_534.png",
+        "map_stove": "PNG/Tiles/tile_297.png",
+        "map_sink": "PNG/Tiles/tile_323.png",
+        "map_counter": "PNG/Tiles/tile_430.png"
+      },
+      "notes": "Only normalized PNGs used by the MVP fallback/runtime are promoted into client/assets; the full raw source zip stays under tools/asset-pipeline/downloads and is not copied into the first package."
     }
   ]
 }

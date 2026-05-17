@@ -1,0 +1,278 @@
+{
+  "id": "cat_directional_attack_manifest",
+  "source": "client/assets/art/generated/cat_directional_attacks/source/gpt_image_2_cat_directional_attack_sheet.png",
+  "backAttackSource": "client/assets/art/generated/cat_back_attacks/source/gpt_image_2_cat_back_attack_sheet.png",
+  "sourceTool": "OpenAI image generation through Codex built-in image_gen",
+  "segmentation": "chroma-key connected components sorted by row and column",
+  "skins": [
+    "cat_orange_tabby",
+    "cat_gray_tuxedo",
+    "cat_calico",
+    "cat_black",
+    "cat_siamese"
+  ],
+  "frames": [
+    "side_attack_1",
+    "side_attack_2",
+    "front_attack_1",
+    "front_attack_2",
+    "diag_front_attack_1",
+    "diag_front_attack_2",
+    "diag_back_attack_1",
+    "diag_back_attack_2",
+    "back_attack_1",
+    "back_attack_2"
+  ],
+  "entries": [
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "side_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_side_attack_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "side_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_side_attack_2.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_front_attack_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_front_attack_2.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_front_attack_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_front_attack_2.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_back_attack_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_back_attack_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "side_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_side_attack_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "side_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_side_attack_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_front_attack_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_front_attack_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_front_attack_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_front_attack_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_back_attack_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_back_attack_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "side_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_side_attack_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "side_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_side_attack_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_front_attack_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_front_attack_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_front_attack_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_front_attack_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_back_attack_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_back_attack_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "side_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_side_attack_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "side_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_side_attack_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_front_attack_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_front_attack_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_front_attack_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_front_attack_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_back_attack_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_back_attack_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "side_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_side_attack_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "side_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_side_attack_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_front_attack_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_front_attack_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_front_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_front_attack_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_front_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_front_attack_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_back_attack_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_back_attack_2.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_back_attack_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_back_attack_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_back_attack_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_back_attack_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_back_attack_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_back_attack_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_back_attack_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_back_attack_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "back_attack_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_back_attack_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "back_attack_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_back_attack_2.png"
+    }
+  ]
+}

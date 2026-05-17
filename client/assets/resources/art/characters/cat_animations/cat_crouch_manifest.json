@@ -1,0 +1,147 @@
+{
+  "id": "cat_crouch_manifest",
+  "source": "client/assets/art/generated/cat_crouches/source/gpt_image_2_cat_crouch_sheet.png",
+  "sourceTool": "OpenAI image generation through Codex built-in image_gen",
+  "segmentation": "chroma-key connected components sorted by row and column",
+  "skins": [
+    "cat_orange_tabby",
+    "cat_gray_tuxedo",
+    "cat_calico",
+    "cat_black",
+    "cat_siamese"
+  ],
+  "frames": [
+    "side_crouch",
+    "front_crouch",
+    "back_crouch",
+    "diag_front_crouch",
+    "diag_back_crouch"
+  ],
+  "entries": [
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "side_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_side_crouch.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_front_crouch.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_back_crouch.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_front_crouch.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_back_crouch.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "side_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_side_crouch.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_front_crouch.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_back_crouch.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_front_crouch.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_back_crouch.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "side_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_side_crouch.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_front_crouch.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_back_crouch.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_front_crouch.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_back_crouch.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "side_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_side_crouch.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_front_crouch.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_back_crouch.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_front_crouch.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_back_crouch.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "side_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_side_crouch.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_front_crouch.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_back_crouch.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_front_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_front_crouch.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_back_crouch",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_back_crouch.png"
+    }
+  ]
+}

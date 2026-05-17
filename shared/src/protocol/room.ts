@@ -35,10 +35,12 @@ export interface PublicPropState {
   propConfigId: string;
   configId?: string;
   position: Vector2;
+  radius?: number;
   rotationDeg: number;
   isDestroyed: boolean;
   destroyed?: boolean;
   isBreakable?: boolean;
+  blocksMovement?: boolean;
 }
 
 export interface RoomStateSnapshot {

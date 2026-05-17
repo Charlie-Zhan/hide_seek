@@ -1,0 +1,176 @@
+{
+  "source": "client/assets/art/generated/cat_diagonals/source/gpt_image_2_cat_diagonal_sheet.png",
+  "grid": {
+    "rows": 5,
+    "columns": 6,
+    "cellWidth": 228,
+    "cellHeight": 229
+  },
+  "skins": [
+    "cat_orange_tabby",
+    "cat_gray_tuxedo",
+    "cat_calico",
+    "cat_black",
+    "cat_siamese"
+  ],
+  "frames": [
+    "diag_front_idle",
+    "diag_front_walk_1",
+    "diag_front_walk_2",
+    "diag_back_idle",
+    "diag_back_walk_1",
+    "diag_back_walk_2"
+  ],
+  "files": [
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_front_idle.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_front_walk_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_front_walk_2.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_back_idle.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_back_walk_1.png"
+    },
+    {
+      "skin": "cat_orange_tabby",
+      "frame": "diag_back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_orange_tabby_diag_back_walk_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_front_idle.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_front_walk_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_front_walk_2.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_back_idle.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_back_walk_1.png"
+    },
+    {
+      "skin": "cat_gray_tuxedo",
+      "frame": "diag_back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_gray_tuxedo_diag_back_walk_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_front_idle.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_front_walk_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_front_walk_2.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_back_idle.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_back_walk_1.png"
+    },
+    {
+      "skin": "cat_calico",
+      "frame": "diag_back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_calico_diag_back_walk_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_front_idle.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_front_walk_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_front_walk_2.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_back_idle.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_back_walk_1.png"
+    },
+    {
+      "skin": "cat_black",
+      "frame": "diag_back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_black_diag_back_walk_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_front_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_front_idle.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_front_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_front_walk_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_front_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_front_walk_2.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_back_idle",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_back_idle.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_back_walk_1",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_back_walk_1.png"
+    },
+    {
+      "skin": "cat_siamese",
+      "frame": "diag_back_walk_2",
+      "path": "client/assets/resources/art/characters/cat_animations/cat_siamese_diag_back_walk_2.png"
+    }
+  ]
+}

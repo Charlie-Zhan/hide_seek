@@ -8,6 +8,7 @@ local/
 build/
 profiles/
 .creator/
+client/HideSeek/
 
 # TypeScript / Node outputs
 dist/

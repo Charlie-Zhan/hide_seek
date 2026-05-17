@@ -17,6 +17,7 @@ export interface PropInstanceState {
   destroyed: boolean;
   isBreakable: boolean;
   isDisguiseCandidate: boolean;
+  blocksMovement: boolean;
   breakable?: boolean;
 }
 
@@ -32,6 +33,7 @@ export class PropInstance extends Component {
     destroyed: false,
     isBreakable: true,
     isDisguiseCandidate: false,
+    blocksMovement: true,
     breakable: true
   };
 
@@ -97,6 +99,7 @@ function normalizeState(state: PropInstanceState): PropInstanceState {
   const isBreakable = state.isBreakable ?? state.breakable ?? true;
   const configId = state.configId || state.propId;
   const propId = state.propId || configId;
+  const blocksMovement = state.blocksMovement ?? (state.layer !== 'ground' && isBreakable);
 
   return cloneState({
     ...state,
@@ -105,12 +108,14 @@ function normalizeState(state: PropInstanceState): PropInstanceState {
     isBreakable,
     breakable: isBreakable,
     radius: state.radius,
-    isDisguiseCandidate: state.isDisguiseCandidate
+    isDisguiseCandidate: state.isDisguiseCandidate,
+    blocksMovement
   });
 }
 
 function cloneState(state: PropInstanceState): PropInstanceState {
   const isBreakable = state.isBreakable ?? state.breakable ?? true;
+  const blocksMovement = state.blocksMovement ?? (state.layer !== 'ground' && isBreakable);
   return {
     ...state,
     configId: state.configId || state.propId,
@@ -119,6 +124,7 @@ function cloneState(state: PropInstanceState): PropInstanceState {
     isBreakable,
     breakable: isBreakable,
     isDisguiseCandidate: state.isDisguiseCandidate,
+    blocksMovement,
     position: { ...state.position }
   };
 }

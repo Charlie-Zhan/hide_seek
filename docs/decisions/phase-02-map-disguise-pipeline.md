@@ -6,7 +6,7 @@ Phase 02 defines one MVP map, `kitchen_01`, and one map-level disguise pool. It 
 
 ## Layout Decision
 
-The kitchen is 1280x720 and split into five readable zones:
+The kitchen is 1440x810 and split into five readable zones:
 
 - top-left fridge corner;
 - top-right stove counter;
@@ -21,8 +21,8 @@ These zones create five memory anchors for Preview without filling the whole scr
 - Landmarks: 5
 - Spawn/test positions: 4
 - Seeker spawn points: 1
-- Breakable small props: 28
-- Obstacles: 8
+- Breakable small props: 35
+- Obstacles: 6
 - Occluders: 6
 - Map-level disguise ids: 6
 

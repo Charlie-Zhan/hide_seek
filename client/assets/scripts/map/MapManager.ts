@@ -35,6 +35,7 @@ export interface MapPropConfigInput {
   isBreakable?: boolean;
   breakable?: boolean;
   isDisguiseCandidate?: boolean;
+  blocksMovement?: boolean;
 }
 
 export interface MapVolumeConfigInput {
@@ -47,6 +48,9 @@ export interface MapVolumeConfigInput {
   size?: MapSizeConfig;
   layer?: string;
   radius?: number;
+  blocksMovement?: boolean;
+  allowsOverlap?: boolean;
+  isOccluder?: boolean;
 }
 
 export interface LoadedMapVolumeState {
@@ -55,6 +59,9 @@ export interface LoadedMapVolumeState {
   size: MapSizeConfig;
   layer: string;
   radius?: number;
+  blocksMovement: boolean;
+  allowsOverlap: boolean;
+  isOccluder: boolean;
 }
 
 export interface LocalMapConfigInput {
@@ -231,22 +238,27 @@ function toPropState(config: MapPropConfigInput, mapDisguiseProps: string[]): Pr
   const propId = config.propId ?? config.configId ?? config.propConfigId ?? '';
   const isBreakable = config.isBreakable ?? config.breakable ?? true;
   const isDisguiseCandidate = config.isDisguiseCandidate ?? (mapDisguiseProps.includes(propId) || mapDisguiseProps.includes(configId));
+  const layer = config.layer ?? 'object_back';
 
   return {
     instanceId: config.id,
     configId,
     propId,
     position: toPosition(config),
-    layer: config.layer ?? 'object_back',
+    layer,
     radius: config.radius ?? 16,
     destroyed: false,
     isBreakable,
     isDisguiseCandidate,
+    blocksMovement: config.blocksMovement ?? (layer !== 'ground' && isBreakable),
     breakable: isBreakable
   };
 }
 
 function toVolumeState(config: MapVolumeConfigInput, fallbackLayer: string): LoadedMapVolumeState {
+  const defaultAllowsOverlap = fallbackLayer === 'object_front';
+  const allowsOverlap = config.allowsOverlap ?? (config.blocksMovement === true ? false : defaultAllowsOverlap);
+
   return {
     id: config.id,
     position: toPosition(config),
@@ -255,7 +267,10 @@ function toVolumeState(config: MapVolumeConfigInput, fallbackLayer: string): Loa
       height: config.height ?? config.size?.height ?? 0
     },
     layer: config.layer ?? fallbackLayer,
-    radius: config.radius
+    radius: config.radius,
+    blocksMovement: config.blocksMovement ?? !allowsOverlap,
+    allowsOverlap,
+    isOccluder: config.isOccluder ?? fallbackLayer === 'object_front'
   };
 }
 

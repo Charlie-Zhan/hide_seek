@@ -40,11 +40,18 @@ declare module 'cc' {
 
   export class Sprite extends Component {
     color: Color;
+    spriteFrame: SpriteFrame | null;
+  }
+
+  export class SpriteFrame {
   }
 
   export class Graphics extends Component {
     fillColor: Color;
     clear(): void;
+    moveTo(x: number, y: number): void;
+    lineTo(x: number, y: number): void;
+    close(): void;
     rect(x: number, y: number, width: number, height: number): void;
     circle(x: number, y: number, radius: number): void;
     fill(): void;
@@ -62,6 +69,13 @@ declare module 'cc' {
     };
     static VerticalAlign: {
       CENTER: number;
+    };
+  }
+
+  export class Mask extends Component {
+    type: number;
+    static Type: {
+      RECT: number;
     };
   }
 

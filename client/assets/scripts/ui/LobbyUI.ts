@@ -214,7 +214,7 @@ export class LobbyUI extends Component {
       errorText: this.errorText,
       createButtonText: 'Create Room',
       joinButtonText: 'Join Room',
-      soloButtonText: 'Solo Practice',
+      soloButtonText: 'Solo Match',
       soloComputerCountText: `${this.soloComputerCount} Computer ${this.soloComputerCount === 1 ? 'Player' : 'Players'}`,
       canDecreaseSoloComputerCount: this.soloComputerCount > MIN_SOLO_COMPUTER_COUNT,
       canIncreaseSoloComputerCount: this.soloComputerCount < MAX_SOLO_COMPUTER_COUNT

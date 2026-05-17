@@ -1,4 +1,4 @@
-import type { GameConfig, PropConfig, Vector2 } from '@prop-hide-seek/shared';
+import type { GameConfig, PropConfig, RoundEndReason as SharedRoundEndReason, Vector2 } from '@prop-hide-seek/shared';
 import { PlayerRole, PlayerState, RoundPhase } from '@prop-hide-seek/shared';
 
 export { PlayerRole, PlayerState, RoundPhase };
@@ -23,6 +23,25 @@ export interface LocalPropInstance {
   radius: number;
   breakable: boolean;
   destroyed: boolean;
+  blocksMovement?: boolean;
+}
+
+export interface LocalCollisionRect {
+  id: string;
+  position: Vector2;
+  size: {
+    width: number;
+    height: number;
+  };
+  blocksMovement: boolean;
+  allowsOverlap: boolean;
+}
+
+export interface LocalMovementBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
 }
 
 export interface LocalRoundScoreDelta {
@@ -49,7 +68,7 @@ export interface LocalAttackResult {
   endedRound: boolean;
 }
 
-export type RoundEndReason = 'timer_expired' | 'attacks_depleted' | 'all_hiders_captured' | 'debug_skip';
+export type RoundEndReason = SharedRoundEndReason;
 
 export interface LocalGameSnapshot {
   phase: RoundPhase;
@@ -66,6 +85,13 @@ export interface LocalGameSnapshot {
 
 export interface LocalGameSetup {
   gameConfig: GameConfig;
+  mapSize?: {
+    width: number;
+    height: number;
+  };
+  movementBounds?: LocalMovementBounds;
+  seekerSpawnPoint?: Vector2;
+  spawnPoints?: Vector2[];
   players: Array<{
     playerId: string;
     displayName: string;
@@ -75,6 +101,7 @@ export interface LocalGameSetup {
   }>;
   availablePropIds: string[];
   props?: LocalPropInstance[];
+  obstacles?: LocalCollisionRect[];
   hideIdleDisguiseMs?: number;
 }
 
@@ -86,5 +113,5 @@ export interface PlayerMovementInput {
 export const DEFAULT_HIDE_IDLE_DISGUISE_MS = 250;
 export const DEFAULT_PLAYER_RADIUS_PX = 18;
 export const MIN_LOCAL_PLAYERS = 2;
-export const MAX_LOCAL_PLAYERS = 5;
+export const MAX_LOCAL_PLAYERS = 4;
 

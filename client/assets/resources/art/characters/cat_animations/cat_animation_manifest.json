@@ -1,0 +1,26 @@
+{
+  "id": "cat_animation_sprites",
+  "displayName": "Generated Cat Animation Sprites",
+  "source": "OpenAI image generation through Codex built-in image_gen",
+  "sourceAuthor": "Generated project asset",
+  "license": "Generated project asset",
+  "sourceRecordPath": "client/assets/art/generated/cat_animations/README.md",
+  "promptRecordPath": "client/assets/art/generated/cat_animations/PROMPT.md",
+  "skins": [
+    "cat_orange_tabby",
+    "cat_gray_tuxedo",
+    "cat_calico",
+    "cat_black",
+    "cat_siamese"
+  ],
+  "frames": [
+    "idle",
+    "walk_1",
+    "walk_2",
+    "attack_1",
+    "attack_2",
+    "reveal",
+    "dizzy"
+  ],
+  "pathPattern": "art/characters/cat_animations/{skin}_{frame}"
+}

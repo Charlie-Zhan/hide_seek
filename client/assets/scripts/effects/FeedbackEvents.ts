@@ -1,4 +1,4 @@
-import { RoundPhase } from '../gameplay/LocalGameTypes';
+import { RoundPhase, type RoundEndReason } from '../gameplay/LocalGameTypes';
 
 export enum FeedbackEventType {
   ButtonClick = 'button_click',
@@ -71,7 +71,7 @@ export interface RoundStartedFeedbackEvent extends FeedbackEventBase {
 export interface RoundEndedFeedbackEvent extends FeedbackEventBase {
   readonly type: FeedbackEventType.RoundEnded;
   readonly roundIndex: number;
-  readonly reason: 'timer_expired' | 'attacks_depleted' | 'all_hiders_captured' | 'debug_skip';
+  readonly reason: RoundEndReason;
 }
 
 export interface MatchOutcomeFeedbackEvent extends FeedbackEventBase {
