@@ -5,7 +5,8 @@ node_modules/
 library/
 temp/
 local/
-build/
+/build/
+client/build/
 profiles/
 .creator/
 client/HideSeek/

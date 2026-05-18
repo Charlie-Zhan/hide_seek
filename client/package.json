@@ -10,5 +10,9 @@
   "devDependencies": {
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
-  }
+  },
+  "creator": {
+    "version": "3.8.8"
+  },
+  "uuid": "7cd57928-9963-428d-b257-d16d69a89200"
 }

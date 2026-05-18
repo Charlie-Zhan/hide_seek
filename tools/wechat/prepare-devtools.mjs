@@ -3,9 +3,11 @@ import { join, relative, resolve, sep } from 'node:path';
 import { networkInterfaces } from 'node:os';
 
 const root = process.cwd();
-const wechatGameRoot = join(root, 'client', 'HideSeek', 'wechatgame');
+const wechatGameRoot = resolveWechatGameRoot(root);
 const projectConfigPath = join(wechatGameRoot, 'project.config.json');
 const projectPrivateConfigPath = join(wechatGameRoot, 'project.private.config.json');
+const gameJsonPath = join(wechatGameRoot, 'game.json');
+const runtimeSettingsPath = join(wechatGameRoot, 'src', 'settings.json');
 const gameJsPath = join(wechatGameRoot, 'game.js');
 const gameConfigPath = join(root, 'client', 'assets', 'resources', 'configs', 'game_config.json');
 const fallbackSourcePath = join(root, 'tools', 'wechat', 'native-fallback.js');
@@ -109,6 +111,8 @@ config.setting = {
 config.condition = normalizeConditions(config.condition);
 
 writeFileSync(projectConfigPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+writeLandscapeGameJson();
+writeRuntimeLaunchScene();
 writePrivateDevtoolsConfig();
 cleanFallbackRuntimeAssets();
 copyFileSync(fallbackSourcePath, fallbackRuntimePath);
@@ -152,6 +156,46 @@ console.log('launchScene=db://assets/scenes/Lobby.scene');
 console.log(`nativeFallback=${nativeFallbackEnabled ? 'enabled' : 'disabled'}`);
 console.log(`roomServerUrl=${roomServerUrl}`);
 printPackageSummary(packageSummary);
+
+function resolveWechatGameRoot(projectRoot) {
+  const override = process.env.PROP_HIDE_SEEK_WECHAT_GAME_ROOT;
+  const candidates = [
+    override ? resolve(projectRoot, override) : '',
+    join(projectRoot, 'client', 'build', 'wechatgame'),
+    join(projectRoot, 'client', 'HideSeek', 'wechatgame')
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (existsSync(join(candidate, 'project.config.json'))) {
+      return candidate;
+    }
+  }
+
+  return candidates[0] ?? join(projectRoot, 'client', 'build', 'wechatgame');
+}
+
+function writeLandscapeGameJson() {
+  if (!existsSync(gameJsonPath)) {
+    return;
+  }
+
+  const gameJson = readJson(gameJsonPath);
+  gameJson.deviceOrientation = 'landscapeRight';
+  writeFileSync(gameJsonPath, `${JSON.stringify(gameJson, null, 2)}\n`, 'utf8');
+}
+
+function writeRuntimeLaunchScene() {
+  if (!existsSync(runtimeSettingsPath)) {
+    return;
+  }
+
+  const settings = readJson(runtimeSettingsPath);
+  settings.launch = {
+    ...(settings.launch ?? {}),
+    launchScene: 'db://assets/scenes/Lobby.scene'
+  };
+  writeFileSync(runtimeSettingsPath, `${JSON.stringify(settings)}\n`, 'utf8');
+}
 
 function cleanFallbackRuntimeAssets() {
   for (const runtimeRoot of fallbackRuntimeAssetRoots) {
